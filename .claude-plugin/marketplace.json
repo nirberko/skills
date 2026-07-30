@@ -1,0 +1,23 @@
+{
+  "name": "nirberko",
+  "owner": {
+    "name": "Nir Berko",
+    "url": "https://github.com/nirberko"
+  },
+  "description": "Nir Berko's agent skills, as an installable Claude Code plugin.",
+  "plugins": [
+    {
+      "name": "nirberko-skills",
+      "source": "./",
+      "description": "Skills for understanding code you didn't write (learn, explain) and catching your team's review comments before they do (cr).",
+      "category": "engineering",
+      "keywords": [
+        "skills",
+        "code-review",
+        "onboarding",
+        "learning",
+        "pre-pr"
+      ]
+    }
+  ]
+}
