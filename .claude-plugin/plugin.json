@@ -1,7 +1,7 @@
 {
   "name": "nirberko-skills",
-  "version": "0.1.0",
-  "description": "Agent skills for understanding code you didn't write and catching review comments before reviewers do.",
+  "version": "0.2.0",
+  "description": "Agent skills for understanding code you didn't write and catching review comments before reviewers do, plus an output style that makes every answer land.",
   "author": {
     "name": "Nir Berko",
     "url": "https://github.com/nirberko"
@@ -15,11 +15,16 @@
     "onboarding",
     "learning",
     "explain",
-    "pre-pr"
+    "pre-pr",
+    "output-style",
+    "plain-language"
   ],
   "skills": [
     "./skills/cr",
     "./skills/explain",
     "./skills/learn"
+  ],
+  "outputStyles": [
+    "./output-styles"
   ]
 }

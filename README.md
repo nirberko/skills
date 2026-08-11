@@ -1,7 +1,8 @@
 # skills
 
 Three agent skills for the two things that eat the most time on an unfamiliar
-codebase: understanding code you didn't write, and getting through review.
+codebase: understanding code you didn't write, and getting through review. Plus an
+output style, for when the problem isn't the code — it's that the answer didn't land.
 
 - **`/learn`** — an interactive tutor that traces one real flow in *your* repo, one
   small stop at a time, and quizzes you before moving on.
@@ -9,6 +10,8 @@ codebase: understanding code you didn't write, and getting through review.
   understand: a PR thread, a stack trace, a feature, a ticket.
 - **`/cr`** — a pre-PR self-review that learns your team's recurring review comments
   and leaves them on your diff before a reviewer does.
+- **Plain** *(output style)* — every answer, every turn: context first, then
+  Simplified Technical English, in your project's own vocabulary.
 
 They're prompt-only. No servers, no API keys, no config files to maintain.
 
@@ -20,6 +23,13 @@ They're prompt-only. No servers, no API keys, no config files to maintain.
 ```
 /plugin marketplace add nirberko/skills
 /plugin install nirberko-skills
+```
+
+The skills work immediately. The `Plain` output style is opt-in — turn it on with
+`/config` → **Output style** → **Plain**, or set it directly in `~/.claude/settings.json`:
+
+```json
+{ "outputStyle": "Plain" }
 ```
 
 </details>
@@ -39,6 +49,7 @@ npx skills@latest add nirberko/skills
 ```bash
 git clone https://github.com/nirberko/skills
 cp -R skills/skills/* ~/.claude/skills/
+cp -R skills/output-styles/* ~/.claude/output-styles/
 ```
 
 </details>
@@ -58,6 +69,34 @@ ready to push".
 `learn` and `explain` are two halves of the same problem. `explain` is one answer;
 `learn` is a course. Ask `explain` when you need to get on with it, `learn` when
 you'll be living in that code for a while.
+
+## `Plain` is `explain` with no trigger
+
+The three skills above are things you invoke. `Plain` is not — it's an
+[output style](https://code.claude.com/docs/en/output-styles), which means it edits the
+system prompt and applies to every response until you turn it off.
+
+It exists for the sentence you shouldn't have to type twice: *"wait, I don't understand
+where you've got to here."* Three standing rules:
+
+1. **Give a little bit of context.** Never open mid-thought. What was asked, where the
+   work is now, what this message changes. Name a file, table, or term the first time
+   it appears.
+2. **Write ASD-STE100 Simplified Technical English** — the aerospace maintenance-manual
+   standard. Active voice, present tense, one word per meaning, ≤20 words per
+   procedural sentence, no noun stacks deeper than three, articles kept. Code, paths,
+   commands, and error strings are exempt and stay verbatim.
+3. **Use the ubiquitous language from `CONTEXT.md`.** If the repo has one, its terms are
+   used exactly as defined — no invented synonyms. If it doesn't, the codebase and your
+   own wording are the vocabulary instead. It never blocks on a missing file.
+
+`keep-coding-instructions: true`, so Claude Code's engineering behavior is untouched —
+this changes how it explains, not what it does. A closing rule stops the obvious failure
+mode: it must not substitute an explanation for the work, and must not re-state context
+in every message of a long thread.
+
+Adapted from Matt Pocock's [`wait-what`](https://github.com/mattpocock/skills) skill,
+which asks for this once. This asks for it always.
 
 ## `cr` learns your team, not mine
 

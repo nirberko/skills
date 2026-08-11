@@ -4,19 +4,21 @@
     "name": "Nir Berko",
     "url": "https://github.com/nirberko"
   },
-  "description": "Nir Berko's agent skills, as an installable Claude Code plugin.",
+  "description": "Nir Berko's agent skills and output styles, as an installable Claude Code plugin.",
   "plugins": [
     {
       "name": "nirberko-skills",
       "source": "./",
-      "description": "Skills for understanding code you didn't write (learn, explain) and catching your team's review comments before they do (cr).",
+      "description": "Skills for understanding code you didn't write (learn, explain) and catching your team's review comments before they do (cr), plus the Plain output style.",
       "category": "engineering",
       "keywords": [
         "skills",
         "code-review",
         "onboarding",
         "learning",
-        "pre-pr"
+        "pre-pr",
+        "output-style",
+        "plain-language"
       ]
     }
   ]
