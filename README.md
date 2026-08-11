@@ -1,13 +1,16 @@
 # skills
 
-Three agent skills for the two things that eat the most time on an unfamiliar
-codebase: understanding code you didn't write, and getting through review. Plus an
-output style, for when the problem isn't the code — it's that the answer didn't land.
+Four agent skills for the things that eat the most time on an unfamiliar codebase:
+understanding code you didn't write, getting a design approved, and getting through
+review. Plus an output style, for when the problem isn't the code — it's that the
+answer didn't land.
 
 - **`/learn`** — an interactive tutor that traces one real flow in *your* repo, one
   small stop at a time, and quizzes you before moving on.
 - **`/explain`** — one complete plain-language answer about anything you don't
   understand: a PR thread, a stack trace, a feature, a ticket.
+- **`/tech-design`** — a design doc an engineer from another team can follow without
+  asking you a question, ready to publish to Confluence.
 - **`/cr`** — a pre-PR self-review that learns your team's recurring review comments
   and leaves them on your diff before a reviewer does.
 - **Plain** *(output style)* — every answer, every turn: context first, then
@@ -60,15 +63,47 @@ cp -R skills/output-styles/* ~/.claude/output-styles/
 |---|---|---|
 | `learn` | you or the model | Multi-turn tutorial on one flow in this repo. Picks a trace with you, splits it into 6–10 stops, then teaches one idea per turn: plain-language claim, a real ≤10-line snippet with `file.py:42` citations, a multiple-choice check. Saves every lesson to an Obsidian vault so it accumulates and can be resumed. |
 | `explain` | you or the model | One-shot explainer. Classifies the input (PR URL, pasted review comment, code block, error, feature name, ticket), reads the actual code, and answers with a moving-parts table, an execution-order flow, and cited line numbers. Nothing is assumed obvious. |
+| `tech-design` | you or the model | Writes a technical design as Confluence HTML+ (native @mention chips, status pills, panels) or plain markdown. Fixed section order, an Overview table, a Design Summary of concrete models/queries/file paths with a `Reuses:` list per component, Option 1/Option 2 with a first-person recommendation, and phases with a Definition of Done. Renders flows as Mermaid images and verifies every URL returns 200 before publishing. |
 | `cr` | you | Reviews the current branch — committed *and* uncommitted — against your repo's ruleset, and returns GitHub-style inline comments: severity code, `file:line`, the offending lines, a blunt one-line TLDR, and a one-click ` ```suggestion ` fix. |
 
 Trigger phrases: `/learn`, "teach me X", "walk me through X" · `/explain`, "what does
-this do", "I don't understand this PR comment" · `/cr`, "review my changes", "am I
-ready to push".
+this do", "I don't understand this PR comment" · `/tech-design`, "write a design doc
+for X", "draft a TDR" · `/cr`, "review my changes", "am I ready to push".
 
 `learn` and `explain` are two halves of the same problem. `explain` is one answer;
 `learn` is a course. Ask `explain` when you need to get on with it, `learn` when
 you'll be living in that code for a while.
+
+## `tech-design` ships no house rules either
+
+Same principle as `cr`. The *structure* of a good design doc is portable — section
+order, an Overview table, a Design Summary made of real models and file paths, Option
+1/Option 2 with an actual recommendation, phases with a Definition of Done. That's
+what the skill ships.
+
+What isn't portable is the handful of things your team always checks: which database
+a new table belongs in, whether a change has to work on two engines, how migrations
+are staged, how a feature is flagged and monitored, who's allowed to call the new API.
+Ship those as generic "best practices" and you get a doc full of sections nobody
+needed.
+
+So `tech-design` reads them from a house file, whichever exists first:
+
+```
+docs/tech-design.md          # version-controlled, shared with the team
+.github/tech-design.md
+~/.claude/tech-design/<repo>.md   # if it quotes internal systems, keep it out of git
+```
+
+No file, and a change that touches infrastructure? It offers once to derive one by
+reading your team's accepted designs and extracting the questions that recur across
+them — then moves on. It won't invent a house rule it can't point at in a real prior
+design.
+
+The one rule it will not bend: **the reviewer is an engineer from another team who
+has never opened this code.** Every acronym glossed inline where it first appears,
+every file path given a clause saying what it does, and no Glossary section — because
+a reader shouldn't have to memorize a list before the design starts.
 
 ## `Plain` is `explain` with no trigger
 

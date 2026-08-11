@@ -9,7 +9,7 @@
     {
       "name": "nirberko-skills",
       "source": "./",
-      "description": "Skills for understanding code you didn't write (learn, explain) and catching your team's review comments before they do (cr), plus the Plain output style.",
+      "description": "Skills for understanding code you didn't write (learn, explain), catching your team's review comments before they do (cr), and writing a design doc a reviewer can follow (tech-design), plus the Plain output style.",
       "category": "engineering",
       "keywords": [
         "skills",
@@ -18,7 +18,10 @@
         "learning",
         "pre-pr",
         "output-style",
-        "plain-language"
+        "plain-language",
+        "tech-design",
+        "rfc",
+        "confluence"
       ]
     }
   ]

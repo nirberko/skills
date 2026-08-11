@@ -1,7 +1,7 @@
 {
   "name": "nirberko-skills",
-  "version": "0.2.0",
-  "description": "Agent skills for understanding code you didn't write and catching review comments before reviewers do, plus an output style that makes every answer land.",
+  "version": "0.3.0",
+  "description": "Agent skills for understanding code you didn't write, catching review comments before reviewers do, and writing a design doc a reviewer can actually follow, plus an output style that makes every answer land.",
   "author": {
     "name": "Nir Berko",
     "url": "https://github.com/nirberko"
@@ -17,12 +17,16 @@
     "explain",
     "pre-pr",
     "output-style",
-    "plain-language"
+    "plain-language",
+    "tech-design",
+    "rfc",
+    "confluence"
   ],
   "skills": [
     "./skills/cr",
     "./skills/explain",
-    "./skills/learn"
+    "./skills/learn",
+    "./skills/tech-design"
   ],
   "outputStyles": [
     "./output-styles"

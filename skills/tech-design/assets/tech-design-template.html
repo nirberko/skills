@@ -1,0 +1,119 @@
+<!-- Tech design - Confluence HTML+ skeleton.
+     Rules: no <html>/<head>/<body> wrappers; standard HTML plus Confluence
+     data-type nodes. Never invent data-user-id values - resolve real account
+     ids (lookupJiraAccountId) or leave the name as plain text.
+     Never use em dashes (—) anywhere - only the regular dash (-). -->
+
+<h2>📋 Overview</h2>
+<table>
+  <tbody>
+    <tr><td><p><strong>Status</strong></p></td>
+        <td><p><span data-type="status" data-color="neutral">NOT STARTED</span></p></td></tr>
+        <!-- neutral = not started, blue = in progress, green = done -->
+    <tr><td><p><strong>Owner</strong></p></td>
+        <td><p><span data-type="mention" data-user-id="ACCOUNT_ID">@Owner Name</span></p></td></tr>
+    <tr><td><p><strong>Contributors</strong></p></td>
+        <td><p><span data-type="mention" data-user-id="ACCOUNT_ID">@Contributor Name</span></p></td></tr>
+    <tr><td><p><strong>Goals</strong></p></td>
+        <td><p>One or two sentences on what this design achieves and why.</p></td></tr>
+    <tr><td><p><strong>Prototype</strong></p></td>
+        <td><p><a href="https://figma.com/...">Figma link</a></p></td></tr>
+    <tr><td><p><strong>Tickets</strong></p></td>
+        <td><p>PROJ-1234</p></td></tr>
+  </tbody>
+</table>
+<!-- Keep only these six rows. Drop any row that is empty / N/A (e.g. no Prototype for a non-UI design). -->
+
+<h2>🎯 Requirements</h2>
+<!-- Mini-PRD, scaled to the design. Open with framing prose; <strong>bold</strong> the key
+     domain terms and define any the doc relies on. Then a numbered Scope list, then optionally
+     a high-level tech approach. Larger designs nest Background / Problem Statement /
+     Proposed Solution / Monitoring & Alerts / Potential Side Effects. -->
+<p>Short framing: what the change does and for whom, with the key <strong>domain terms</strong> bolded.</p>
+<p><strong>Scope:</strong></p>
+<ol>
+  <li><p>Concrete capability the design must deliver.</p></li>
+  <li><p>Concrete capability, with nested cases if needed.</p></li>
+</ol>
+<p><strong>Tech approach (high level):</strong></p>
+<ul>
+  <li><p>Mechanism / existing system this builds on.</p></li>
+</ul>
+
+<h2>💻 Technical Overview</h2>
+<!-- Optional. A bulleted breakdown by concern for richer designs. Delete if the Design Summary covers it. -->
+<h3>Data Storage</h3>
+<ul><li><p>Where the data lives, how it stays isolated, and the phase boundaries.</p></li></ul>
+
+<h2>🧑‍🎨 Design Summary</h2>
+<!-- The core. Split into themed subsections (emoji h3) or numbered components. Not one flat blob.
+     Per component: state Location + a Reuses list + an optional inline "Why X?" block. -->
+
+<h3>🗄️ Data Model</h3>
+<!-- New table: Column / Type / Null / Notes, then constraints + indexes. Say which database.
+     Reshaping an existing table? Use Removed / New / Renamed / Unchanged field tables instead. -->
+<table>
+  <tbody>
+    <tr><th><p>Column</p></th><th><p>Type</p></th><th><p>Null</p></th><th><p>Description</p></th></tr>
+    <tr><td><p><code>id</code></p></td><td><p><code>UUID</code></p></td><td><p>NO</p></td><td><p>Primary key</p></td></tr>
+  </tbody>
+</table>
+<p><strong>Constraints / Indexes:</strong> ...</p>
+
+<h3>⚙️ Core logic / engine</h3>
+<p><strong>Location:</strong> <code>path/to/dir/</code></p>
+<p><strong>Reuses:</strong></p>
+<ul><li><p><code>ExistingUtility.method()</code> - what it gives us</p></li></ul>
+<p><strong>Why &lt;non-obvious choice&gt;?</strong> short technical justification.</p>
+
+<h3>🔌 API</h3>
+<!-- REST as POST /path/{param} + field table, or GraphQL. For a schema change, show old vs new query blocks. -->
+<pre><code class="language-graphql">query GetExample($slug: String!) {
+  example(slug: $slug) { id name }   # new-field: ...
+}
+</code></pre>
+<p><strong>Field mapping</strong> (UI column → backend source):</p>
+<table>
+  <tbody>
+    <tr><th><p>UI column</p></th><th><p>Backend source</p></th></tr>
+    <tr><td><p>...</p></td><td><p>...</p></td></tr>
+  </tbody>
+</table>
+
+<h2>Possible Solutions</h2>
+<!-- Only when weighing real alternatives. Delete otherwise. Close with a first-person recommendation. -->
+<h4>Option 1 - name</h4>
+<p>One-line description.</p>
+<p><strong>Pros:</strong></p>
+<ul><li><p>...</p></li></ul>
+<p><strong>Cons:</strong></p>
+<ul><li><p>...</p></li></ul>
+<h4>Option 2 - name</h4>
+<p>...</p>
+<p><strong>In my opinion, Option 1 is better and recommended because</strong> reason.</p>
+
+<h2>🔄 End-to-End Flow</h2>
+<!-- Numbered runtime walkthrough of one full run, ending with End state. Delete for trivial flows. -->
+<ol>
+  <li><p>What the user does.</p></li>
+  <li><p>What each system does, in order - inline the concrete records/values produced.</p></li>
+</ol>
+<p><strong>End state:</strong> observable result.</p>
+
+<h2>✅ Tasks &amp; Phases</h2>
+<!-- For multi-step work. Give deploy steps their own line, in caps, where one must land
+     before the next phase is safe. When tickets exist, use a task list linked to them. -->
+<h3>Phase 0: name</h3>
+<p><strong>Definition of Done:</strong></p>
+<ul><li><p>observable end condition</p></li></ul>
+<p><strong>Tasks:</strong></p>
+<ol><li><p>work item</p></li></ol>
+<p><strong>Tasks Dependencies:</strong> <code>1 → 2 → [3,4,5]</code></p>
+
+<h2>Did Not Address</h2>
+<ul><li><p>Explicitly out of scope.</p></li></ul>
+
+<h2>❓ Open questions</h2>
+<!-- Concrete unresolved decisions + their options/tradeoff. Tag calls owned outside engineering (product).
+     Keep resolved ones struck through with "✅ resolved (reason)". -->
+<ul><li><p>Unresolved decision + its options/tradeoff.</p></li></ul>
