@@ -9,8 +9,9 @@ answer didn't land.
   small stop at a time, and quizzes you before moving on.
 - **`/explain`** — one complete plain-language answer about anything you don't
   understand: a PR thread, a stack trace, a feature, a ticket.
-- **`/tech-design`** — a design doc an engineer from another team can follow without
-  asking you a question, ready to publish to Confluence.
+- **`/tech-design`** — a design doc written *gradually*, one checkpointed section at a
+  time, in Simplified Technical English, that an engineer from another team can follow
+  without asking you a question, ready to publish to Confluence.
 - **`/cr`** — a pre-PR self-review that learns your team's recurring review comments
   and leaves them on your diff before a reviewer does.
 - **Plain** *(output style)* — every answer, every turn: context first, then
@@ -63,12 +64,17 @@ cp -R skills/output-styles/* ~/.claude/output-styles/
 |---|---|---|
 | `learn` | you or the model | Multi-turn tutorial on one flow in this repo. Picks a trace with you, splits it into 6–10 stops, then teaches one idea per turn: plain-language claim, a real ≤10-line snippet with `file.py:42` citations, a multiple-choice check. Saves every lesson to an Obsidian vault so it accumulates and can be resumed. |
 | `explain` | you or the model | One-shot explainer. Classifies the input (PR URL, pasted review comment, code block, error, feature name, ticket), reads the actual code, and answers with a moving-parts table, an execution-order flow, and cited line numbers. Nothing is assumed obvious. |
-| `tech-design` | you or the model | Writes a technical design as Confluence HTML+ (native @mention chips, status pills, panels) or plain markdown. Fixed section order, an Overview table, a Design Summary of concrete models/queries/file paths with a `Reuses:` list per component, Option 1/Option 2 with a first-person recommendation, and phases with a Definition of Done. Renders flows as Mermaid images and verifies every URL returns 200 before publishing. |
+| `tech-design` | you or the model | Writes a technical design in eight checkpointed phases instead of one turn: reads the code first, rates every term in the request known/assumed/unknown, states the gap before proposing anything, tests each goal against its non-goal, and gets an approach agreed *in ordinary words* before a single table or endpoint is named. Then names the new pieces, walks one item through the whole system — including the quiet run, the deletion, and the crash halfway — and gives each piece a section covering why-this-way, what-it-owns, how-it-fails and the traps. Every sentence of the document is ASD-STE100 Simplified Technical English, with the glossary pass doubling as its approved Technical Names list. Output is Confluence HTML+ (native @mention chips, status pills, panels) or plain markdown, with Mermaid flows rendered as images and every URL verified 200 before publishing. |
 | `cr` | you | Reviews the current branch — committed *and* uncommitted — against your repo's ruleset, and returns GitHub-style inline comments: severity code, `file:line`, the offending lines, a blunt one-line TLDR, and a one-click ` ```suggestion ` fix. |
 
 Trigger phrases: `/learn`, "teach me X", "walk me through X" · `/explain`, "what does
 this do", "I don't understand this PR comment" · `/tech-design`, "write a design doc
 for X", "draft a TDR" · `/cr`, "review my changes", "am I ready to push".
+
+`tech-design` and the **Plain** output style share one register: ASD-STE100 Simplified
+Technical English. Plain controls how answers land in the terminal; `tech-design`
+controls how the document reads. The rule set is the same, so a design doc and the
+conversation about it sound like one voice.
 
 `learn` and `explain` are two halves of the same problem. `explain` is one answer;
 `learn` is a course. Ask `explain` when you need to get on with it, `learn` when

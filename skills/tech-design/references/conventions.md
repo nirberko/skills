@@ -1,53 +1,66 @@
 # Tech Design Conventions
 
 The shape of a design document that gets reviewed quickly and built from
-accurately. A design is read once by people who will argue with it, and then
-kept as the record of what was decided. Optimize for both.
+accurately. A design is read once by people who will argue with it, and then kept
+as the record of what was decided. Optimize for both.
+
+The document is written in **ASD-STE100 Simplified Technical English**. The rules,
+the approved word substitutions, and the worked examples are in `ste.md`.
+
+This file holds the invariants: what order the sections go in, how to write so a
+stranger can follow it, the style rules, and how to draw things. **Per-section
+guidance** - what each section is for, when it earns its place, what to ask, how it
+goes wrong - is in `sections.md`.
 
 ## Table of Contents
 - [Section order](#section-order)
-- [Overview table](#overview-table)
 - [Write so an outsider understands](#write-so-an-outsider-understands)
-- [Writing the Requirements](#writing-the-requirements)
+- [The register: Simplified Technical English](#the-register-simplified-technical-english)
+- [Confidence tags](#confidence-tags)
 - [Style rules](#style-rules)
-- [Writing the Design Summary](#writing-the-design-summary)
-- [Weighing alternatives](#weighing-alternatives)
-- [End-to-End Flow](#end-to-end-flow)
-- [Tasks & Phases](#tasks--phases)
-- [Open questions](#open-questions)
 - [House patterns](#house-patterns)
 - [Diagrams, tables, code](#diagrams-tables-code)
 - [Tone](#tone)
 
 ## Section order
 
-Canonical order. Drop sections that don't apply - a small design is just
-Overview → Requirements → Design Summary → Open questions:
+Canonical order. **Sections are chosen, not stamped** - drop the ones that don't
+apply. A small design is just Overview → Requirements → Design Summary → Open
+questions. Details on when each earns its place: `sections.md`.
 
 1. `## 📋 Overview` - the metadata table (always)
-2. `## 🎯 Requirements` - scope of the change (can grow into a mini-PRD)
-3. `## 💻 Technical Overview` - optional; bulleted breakdown by concern, for larger designs
-4. `## 🧑‍🎨 Design Summary` - the core, split into themed subsections
-5. `## Possible Solutions` - only when comparing options (Option 1 / Option 2 + recommendation)
-6. `## 🔄 End-to-End Flow` - runtime walkthrough, when the feature has a non-trivial flow
-7. `## ✅ Tasks & Phases` - phased delivery plan, for anything multi-step
-8. `## Did Not Address` - explicit scope exclusions (only when useful)
-9. `## ❓ Open questions` - unresolved decisions
+2. `## 🎯 Requirements` - the problem, scope, goals and non-goals (always)
+3. `## 🏛️ Current Architecture` - when something already exists that this changes
+4. `## 💻 Technical Overview` - optional; bulleted breakdown by concern, for larger designs
+5. `## 🧑‍🎨 Design Summary` - the core: how the pieces fit, then one numbered subsection per new component (always)
+6. `## Possible Solutions` - when comparing options (Option 1 / Option 2 + recommendation)
+7. `## 🔄 End-to-End Flow` - runtime walkthrough plus the variations, when the flow is non-trivial
+8. `## 🚚 Migration & Backfill` ⚠️
+9. `## 🚦 Rollout & Rollback` ⚠️
+10. `## 🧪 Testing Strategy`
+11. `## 📊 Monitoring & Observability`
+12. `## 🛡️ Security & Access` ⚠️
+13. `## 💰 Cost` ⚠️
+14. `## ✅ Tasks & Phases` - phased delivery plan, for anything multi-step
+15. `## Did Not Address` - explicit scope exclusions (only when useful)
+16. `## ⚠️ Risks` - the top three, with mitigations
+17. `## ❓ Open questions` - unresolved decisions, each with an owner
+18. `## 🔗 References` - prior art, tickets, incidents
 
-Emoji headers are the house style here: 📋 Overview, 🎯 Requirements, 💻 Technical
-Overview, 🧑‍🎨 Design Summary, 🔄 End-to-End Flow, ✅ Tasks & Phases, ❓ Open
-questions. Drop them if the team's existing designs don't use them - match the
-corpus you're writing into. Inside the Design Summary, themed emoji subsections
-are common: 🗄️ Data Model, ⚙️ core engine/logic, 🔌 API, 🚨 new risks, 🛡️ access
-control.
+**The four ⚠️ sections may be skipped, but not silently.** A skipped one leaves a
+single line saying why: *"No cost change - no new infrastructure."* Silence reads
+as "not considered", and that is the reviewer's first question.
 
-## Overview table
+**For a normal-size design, 8 through 13 are bold run-in paragraphs inside the
+Design Summary**, one or two lines each, rather than seven near-empty sections.
+They become top-level sections when there is enough to say that a reviewer would
+scroll to find them. A design with five sections that all say something beats
+twelve where seven say "N/A".
 
-Two-column key/value table. Rows, and only these rows: **Status, Owner,
-Contributors, Goals, Prototype, Tickets**. Do not add extra rows - keep it to
-these six, and drop a row entirely when it's empty or N/A (no Prototype row for a
-non-UI design). Status is one of `NOT STARTED` / `IN PROGRESS` / `DONE`. Goals is
-one or two sentences, not a list.
+Emoji headers are the house style here. Drop them if the team's existing designs
+don't use them - match the corpus you're writing into. Inside the Design Summary,
+themed emoji subsections are common: 🗄️ Data Model, ⚙️ core engine/logic, 🔌 API,
+🚨 new risks, 🛡️ access control.
 
 ## Write so an outsider understands
 
@@ -55,8 +68,14 @@ Assume the reviewer is a competent engineer from **another team** who has never
 opened this code. They must be able to follow the whole design without asking
 anyone a question. This is a hard requirement, not a nice-to-have.
 
-- **Plain English, short sentences.** One idea per sentence. Prefer the everyday
-  word: "runs after", not "is invoked downstream of". No clever phrasing.
+- **Plain English, short sentences.** One idea per sentence, 25 words at most.
+  Prefer the everyday word: "runs after", not "is invoked downstream of". No clever
+  phrasing. This is STE rule territory - the full set is in `ste.md`.
+- **Active voice, with the actor named.** "The uploader writes `sent_at`", not
+  "`sent_at` is written". A passive sentence hides who does the thing, and who does
+  the thing is most of a design.
+- **One word for one meaning.** Do not call the same thing a job, a run, and a task
+  across three sections. Pick one word and keep it everywhere.
 - **Explain every internal term inline, the first time it appears**, in a short
   parenthetical or a clause in the same sentence. This covers domain terms, infra
   terms, and every acronym. Example: "the `enriched_orders` table (the stage where
@@ -67,6 +86,10 @@ anyone a question. This is a hard requirement, not a nice-to-have.
   list before the design starts. Every term is defined where it is first used and
   nowhere else. The doc opens with Overview then Requirements; Requirements starts
   with the prose framing of the change, not with definitions.
+
+  This is why the skill runs a glossary **pass** in Phase 2 (see
+  `interrogating.md`): the pass is a working artifact for the conversation that
+  makes the inline glosses correct. It never becomes a section.
 - **Say what a thing does, not only where it lives.** Every file path, class,
   table, or service gets a clause explaining its job: "`AlertRunner` (evaluates one
   alert against current data and emits instances)".
@@ -76,37 +99,59 @@ anyone a question. This is a hard requirement, not a nice-to-have.
   today's flow cannot judge the new one. One or two sentences is enough.
 - **Diagrams and tables over paragraphs.** They are the fastest way for a stranger
   to get the shape. Label every box and column.
+- **The approved Technical Names carry the precision in the detailed design.**
+  Schemas, queries, class and column names go in unchanged. The prose around them
+  follows the same rules as every other section.
 - **Explanatory does not mean long.** Total length stays the same or shrinks:
   glosses and a "why" sentence buy their space back by replacing vague prose,
   hedging, and repeated detail. If a section grows past a screen, cut detail that
   belongs in the PR instead of trimming the explanation.
 
-Quick self-check before finishing: pick three sentences at random. If any needs
-insider knowledge the doc never gave, rewrite it. Then confirm there is no
-term-definition list anywhere; if one crept in, delete it and fold each definition
-into the sentence that first uses the term.
+Self-check for this, and for everything else, is in `review.md`.
 
-## Writing the Requirements
+## The register: Simplified Technical English
 
-Requirements is the "what and why". In the best designs it reads as a mini-PRD,
-not a terse bullet list. Scale it to the size of the change:
+The rules above are the reason for the register, and STE is the standard that
+enforces them. Three points belong here; everything else is in `ste.md`.
 
-- **Open with a short prose framing.** One or two sentences stating what the
-  change does and for whom, with the key domain terms **bolded** mid-sentence.
-  Terms the rest of the doc leans on get defined here only if they appear here,
-  and only inline in the framing sentence. Not as a definitions list.
-- **Then a numbered `Scope` list** - each item one concrete capability the design
-  must deliver, product-facing, with a nested sub-bullet per case where needed.
-- **Optionally a "Tech approach (high level)" bullet block** - 3-5 bullets naming
-  the mechanism you're building on, so a reviewer sees the shape before the detail.
+**It applies to the document, not to the conversation.** Questions, checkpoints,
+and the message that shows what you read in Phase 1 stay natural English.
 
-For larger designs, nest PRD-style subsections under Requirements, using only the
-ones that apply: `Background`, `Problem Statement`, `Proposed Solution`,
-`Extendibility`, `Monitoring & Alerts`, `Potential Side Effects`.
+**The glossary pass is the approved Technical Names list.** STE runs on about 900
+approved words, and the standard lets a project approve its own names for things
+and verbs for actions. Phase 2 produces that list. This is also why there is no
+glossary section: STE asks that a Technical Name is defined for the reader, and
+this skill defines it inline at first use. Same rule, one place.
 
-Keep requirements outcome-shaped: what the user or system gets, not how every
-piece is built. Implementation constraints and test-design details belong in the
-Design Summary.
+**The word list gives way in a sentence that makes a judgement**, and nowhere
+else. Possible Solutions rationale, **Why this way**, Traps, and Risks argue, and
+the dictionary is thin there. The writing rules still apply to those sentences:
+short, active, present tense, no `-ing` verbs. The first-person recommendation
+below is unaffected.
+
+## Confidence tags
+
+Anything you could not verify carries its tag **inline, in the sentence**, not in
+a footnote and not as a hedge:
+
+```
+The nightly job takes 40 minutes (**proven** - see the run history dashboard).
+The slowdown started with the March schema change (**likely** - the timing
+  matches, not reproduced).
+Provider rate limits are the ceiling here (**guess** - cheapest check is one
+  throttled run).
+```
+
+| Tag | Means | Also record |
+|---|---|---|
+| **proven** | Reproduced, or the evidence is direct | Where the evidence is |
+| **likely** | Fits everything seen, not directly confirmed | What would confirm it |
+| **guess** | Plausible, untested | The cheapest way to find out |
+
+Tags survive forwarding; hedged prose does not. Docs get forwarded and the hedges
+fall off first, so a guess that arrives at a reviewer as fact is how a design gets
+built for a problem that doesn't exist. If most of the problem section is `guess`,
+say that at the top rather than burying it.
 
 ## Style rules
 
@@ -116,9 +161,8 @@ Design Summary.
   direction. Dead alternatives simply disappear.
 - **No self-justification about the doc's evolution.** Don't sell "why this beats
   the approach we're replacing". This is different from - and must not be confused
-  with - the encouraged inline **Why X?** blocks (see Design Summary): a short
-  technical justification for a non-obvious *component choice* is good and
-  expected.
+  with - the encouraged inline **Why X?** blocks: a short technical justification
+  for a non-obvious *component choice* is good and expected.
 - **Short headings, no parentheticals.** "Mock service in the web app", not "The
   mock - WireMock service in the web app (mirror of the auth mock)". Cut
   qualifiers like "(non-product)".
@@ -128,97 +172,22 @@ Design Summary.
 - **One heading level per depth.** The Design Summary may use themed `##`/`###`
   subsections and numbered components, but don't stack a fourth level - sub-parts
   of a component get **bold run-in labels** as their own paragraph, not `####`.
+- **Numbers, not adjectives.** "3 seconds", not "slow". "40,000 rows per tenant",
+  not "a lot of data". No fuzzy word survives into the doc unchased - the table is
+  in `interrogating.md`.
 - **Phases list deliverables only.** No "verify by hand: …" walkthrough bullets
   and no narration bullets ("Submit. Then …") - every phase bullet is a
   deliverable, a Definition-of-Done condition, or a concrete task.
+- **No `-ing` word used as a verb or a noun.** "The job is reading the table" →
+  "the job reads the table". "Handling of retries happens here" → "this component
+  retries the call". Approved Technical Names keep theirs.
+- **No more than three nouns stacked.** Break the cluster with a preposition: "the
+  tenant sync job retry backoff config value" → "the config value for the retry
+  backoff in the tenant sync job".
+- **No empty openings.** Delete "There is", "There are", and "It should be noted
+  that". Name the subject and start with the fact.
 - **Never use em dashes (`—`)** anywhere in the doc - headings, bullets, or body
   prose. Only the regular dash `-`.
-
-## Writing the Design Summary
-
-The core. Organize it into **themed subsections** (emoji `##`/`###`: 🗄️ Data
-Model, ⚙️ the core engine, 🔌 API) or **numbered components** ("### 1. REST
-Endpoint - `POST /exports/{format}`"). Don't write it as one flat prose blob.
-
-For each component or subsection, pull in what it needs:
-
-- **Location.** The exact directory or file the component lives in.
-- **"Reuses:" list.** Name the existing utilities, models, services, and hooks the
-  component builds on. Reusing existing code over building new is a first-class
-  value in review - make it visible. A **Reuse vs Build** two-column table is the
-  idiom when a change spans many pieces.
-- **DB tables** as a Column / Type / Null / Notes spec table, plus constraints and
-  indexes as bullets. Say **which** database, explicitly, when the system has more
-  than one. Real model classes are fine too when precision helps.
-- **Schema changes to an existing table** as separate **Removed / New / Renamed /
-  Unchanged** field tables.
-- **UI features** as a field-mapping table per page or table: "UI column → backend
-  source", with a source legend.
-- **API** as real queries, mutations, or REST endpoints (`POST /path/{param}` with
-  a field table). For a schema change, show **old query vs new query** as two code
-  blocks with `# will be deprecated` / `# new-field` comments.
-- **Config** as real JSON or YAML blocks.
-- **Inline "Why X?" blocks** - a bolded mini-header (**Why a queue here?**)
-  followed by a short technical justification, whenever a component choice is
-  non-obvious. Encouraged.
-
-Prefer concrete code, file paths, and tables over prose. A reviewer should be able
-to map each line to a diff.
-
-## Weighing alternatives
-
-When more than one approach is real, enumerate them:
-
-```
-#### Option 1 - <name>
-<one-line description>
-Pros:
-* ...
-Cons:
-* ...
-
-#### Option 2 - <name>
-...
-```
-
-Close with an explicit first-person recommendation: **"In my opinion, Option 1 is
-better and recommended because …"** (simpler, less maintenance, faster to ship).
-For performance-sensitive designs, back the choice with a metrics table and a
-per-approach estimate of the critical path.
-
-## End-to-End Flow
-
-For a change with a non-trivial runtime path, add a `## 🔄 End-to-End Flow`
-section near the end, before Open questions: a **numbered walkthrough** of one
-full run - what the user does, then what each system does in order, ending with an
-**End state** paragraph describing the observable result. Inline the concrete
-records and values produced at each step.
-
-This is the narrative complement to the structural Design Summary.
-
-## Tasks & Phases
-
-For anything multi-step, add `## ✅ Tasks & Phases`. Each phase gets:
-
-- **Definition of Done** - bullets stating the observable end conditions.
-- **Tasks** - a numbered list of concrete work items.
-- **Tasks Dependencies** - the ordering as arrows: `1 → 2 → [3,4,5] → 6`
-  (brackets mean parallelizable).
-
-For migration and rollout designs, interleave explicit deploy steps between phases
-wherever a deploy has to land before the next step is safe. Make them their own
-line, in caps, so nobody reorders them by accident.
-
-When tickets exist, render the breakdown as a checkbox list with each task linked
-to its ticket, grouped by the teams that own them.
-
-## Open questions
-
-`## ❓ Open questions` holds concrete unresolved tensions, not vague "TBDs". Each
-bullet names the decision and its options or tradeoff. Tag decisions owned by
-someone outside engineering *(product)*, *(design)*, *(legal)*. Keep resolved ones
-in place, struck through with a short "✅ resolved (reason)", so the review history
-stays readable.
 
 ## House patterns
 
@@ -244,21 +213,15 @@ which alert channel, which permission model. Write those as a checklist. Do not
 guess at house rules you cannot point to in a real prior design, and never put a
 derived file that quotes internal systems into a public repo.
 
-Patterns that are near-universal and worth addressing even with no house file:
+Record the Confluence `cloudId` / `spaceId` / `parentId` here too, so the next
+design doesn't ask again - see `publishing.md`.
 
-- **Where the data lives**, and how it stays isolated between customers or
-  environments.
-- **Migration**: what has to run, in what order, and whether it's reversible.
-- **Backward compatibility** for anything already being read. The standard move
-  for reshaping a hot table is to build the new one, expose it through a view with
-  the old shape so readers are untouched, dual-write, switch reads, then drop the
-  old columns:
-  ```
-  UI V1 → API V1 → back-compat view (V2→V1) → Table V2 ← Writer V2
-  ```
-- **Rollout and rollback**: the flag that gates it, and what happens when it's off.
-- **Observability**: the metric, log, or alert that tells you it's working.
-- **Access control** on any new API or data path.
+Patterns that are near-universal and worth addressing even with no house file are
+the four ⚠️ sections plus observability - where the data lives and how it stays
+isolated between customers, what migration has to run and whether it's reversible,
+backward compatibility for anything already being read, the flag that gates the
+rollout and what happens when it's off, the metric that says it's working, and
+access control on any new API or data path. Each is written up in `sections.md`.
 
 ## Diagrams, tables, code
 
@@ -266,6 +229,23 @@ Patterns that are near-universal and worth addressing even with no house file:
 request flow across services, state machines, call sequences, table lineage, phase
 dependencies. A picture is the fastest way for a reader from another team to get
 the shape.
+
+**But only for a flow you designed.** An architecture diagram of an **existing**
+system you inferred rather than read stays a placeholder with a written brief. A
+wrong diagram is believed far longer than a wrong paragraph, and it gets
+screenshotted into other documents:
+
+```
+[DIAGRAM NEEDED - current state]
+Show: <the boxes>
+Arrows: <what flows where, and in which direction>
+Highlight: <the bottleneck, or the new pieces>
+```
+
+Describe the picture well enough that someone else can draw it. If the user would
+rather you attempt one, they'll say so - then mark it clearly as a draft to check.
+
+### Rendering a Mermaid diagram
 
 In **markdown** output, a plain ```mermaid fence renders on GitHub and most
 viewers. **Confluence cannot render a mermaid fence**, so render it to an image via
@@ -301,17 +281,51 @@ Rules:
 - Keep each diagram to one idea and under ~15 nodes. Two small diagrams beat one
   unreadable one. Label every node and edge - an unlabeled arrow explains nothing.
 - Keep the `.mmd` source alongside the doc so the diagram can be regenerated.
-- **ASCII diagrams stay** for small inline shapes where a rendered image is
-  overkill (a 3-step arrow chain, a step-evolution line).
+
+### Text sketches
+
+**Plain-text box-and-arrow sketches are encouraged**, not a fallback. They are
+cheap, editable, reviewable in a diff, and they carry most of what a picture
+would - especially for showing what each side of a handover owns:
+
+```
+PRODUCER  (runs inside the policy, every cycle)
+  1. ask the database which items changed
+  2. build the artifact, store it
+      -> makes ZERO external API calls
+
+                    state table
+                         |
+                         v
+
+UPLOADER  (its own schedule, every 15 minutes)
+  1. ask the table what's built but not sent
+  2. send it, write back "sent"
+      -> owns ALL external calls, and therefore all rate limiting
+```
+
+Use one in the Design Summary alongside the rendered diagram; they do different
+jobs, and the sketch is the one you can always write today.
+
+### Tables and code
+
 - Tables are the default idiom: DB column specs, field mappings, Removed/New/
-  Renamed field sets, Reuse vs Build, task IDs, metrics, trade-off comparisons.
+  Renamed/Unchanged field sets, Reuse vs Build, owner → columns, task IDs,
+  metrics, trade-off comparisons, risks.
 - Code fences with correct language tags (`python`, `graphql`, `sql`, `yaml`,
   `json`, `typescript`).
 
 ## Tone
 
 Plain, engineering-direct, and explanatory. Write for an engineer from another
-team: simple English, jargon defined on first use, every component's purpose
-stated. First person is fine for design rationale ("In my opinion #1 is not a good
-solution because …"). No marketing language. It's a document another engineer
-reviews and then builds from.
+team who often reads English as a second language: Simplified Technical English,
+every internal term defined at first use, every component's purpose stated.
+
+First person is fine for design rationale ("In my opinion #1 is not a good
+solution because …"), and it already passes STE - it is short, active, and its
+subject is named. No marketing language. It's a document another engineer reviews
+and then builds from.
+
+Explanatory does not mean soft. STE makes a warning sharper, not milder: a trap
+written as a command with its condition first is the clearest sentence in the
+document. See `ste.md` → *Traps and warnings*.

@@ -78,6 +78,13 @@ preserves inline comments and local ids, which markdown round-trips lose.
 
 ## Notes
 
+- **Never overwrite a shared template page.** Many spaces keep a
+  `Design Document Template` page that says "make a copy, don't edit". Publishing
+  always creates a **new child page** under the parent - it never updates a
+  template. If the user hands you a page id, confirm it isn't the template before
+  writing to it.
+- **If the Atlassian tools aren't available** (no auth, headless run), say so
+  plainly and leave the local file. Don't work around it.
 - **Default to `status="draft"`** unless the user says publish or live. A draft is
   private to the author and safe to iterate on. Switch to `"current"` to make it
   visible in the space.
