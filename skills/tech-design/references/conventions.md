@@ -32,35 +32,42 @@ questions. Details on when each earns its place: `sections.md`.
 2. `## 🎯 Requirements` - the problem, scope, goals and non-goals (always)
 3. `## 🏛️ Current Architecture` - when something already exists that this changes
 4. `## 💻 Technical Overview` - optional; bulleted breakdown by concern, for larger designs
-5. `## 🧑‍🎨 Design Summary` - the core: how the pieces fit, then one numbered subsection per new component (always)
+5. `## 🧑‍🎨 Design Summary` - the core, with its fixed menu of subsections (always; see below)
 6. `## Possible Solutions` - when comparing options (Option 1 / Option 2 + recommendation)
-7. `## 🔄 End-to-End Flow` - runtime walkthrough plus the variations, when the flow is non-trivial
-8. `## 🚚 Migration & Backfill` ⚠️
+7. `## 🖥️ Frontend` - when the change has a UI; carries the end-to-end user flow
+8. `## 🔄 End-to-End Flow` - runtime walkthrough plus the variations, when the backend flow is non-trivial
 9. `## 🚦 Rollout & Rollback` ⚠️
 10. `## 🧪 Testing Strategy`
 11. `## 📊 Monitoring & Observability`
-12. `## 🛡️ Security & Access` ⚠️
-13. `## 💰 Cost` ⚠️
-14. `## ✅ Tasks & Phases` - phased delivery plan, for anything multi-step
-15. `## Did Not Address` - explicit scope exclusions (only when useful)
-16. `## ⚠️ Risks` - the top three, with mitigations
-17. `## ❓ Open questions` - unresolved decisions, each with an owner
-18. `## 🔗 References` - prior art, tickets, incidents
+12. `## 💰 Cost` ⚠️
+13. `## ✅ Tasks & Phases` - phased delivery plan, for anything multi-step
+14. `## Did Not Address` - explicit scope exclusions (only when useful)
+15. `## ⚠️ Risks` - the top three, with mitigations
+16. `## 🔗 References` - prior art, tickets, incidents
+17. `## ❓ Open questions` - **always last.** Unresolved decisions, each with an owner
 
-**The four ⚠️ sections may be skipped, but not silently.** A skipped one leaves a
-single line saying why: *"No cost change - no new infrastructure."* Silence reads
-as "not considered", and that is the reviewer's first question.
+**The Design Summary has a fixed, predictable menu.** In this order: 🗄️ Data
+model, 🔌 API, ⚙️ Core engine behavior, 🛡️ Access control, ⚡ Performance, 🔍
+Filtering & query surfaces, 🚚 Migration & backfill. Drop a slot that does not
+apply (with the ⚠️ one-line rule below for Migration and Access control); never
+reorder, and never invent a new slot when the content fits an existing one. A
+reader who has seen one design from this skill finds everything in the next one
+without hunting. Per-slot guidance is in `sections.md`.
 
-**For a normal-size design, 8 through 13 are bold run-in paragraphs inside the
-Design Summary**, one or two lines each, rather than seven near-empty sections.
-They become top-level sections when there is enough to say that a reviewer would
-scroll to find them. A design with five sections that all say something beats
-twelve where seven say "N/A".
+**The four ⚠️ sections may be skipped, but not silently.** The four: Migration &
+Backfill and Security & Access (both live inside the Design Summary menu), plus
+Rollout & Rollback and Cost. A skipped one leaves a single line saying why: *"No
+cost change - no new infrastructure."* Silence reads as "not considered", and
+that is the reviewer's first question.
+
+**Section length follows complexity, not importance.** A straightforward
+mechanism gets one paragraph, even when it is user-facing or central to the
+product. A subtle mechanism gets the space it needs. Never pad a simple slot to
+make it look thorough - a padded section costs reading time and hides the
+sections that actually need arguing with.
 
 Emoji headers are the house style here. Drop them if the team's existing designs
-don't use them - match the corpus you're writing into. Inside the Design Summary,
-themed emoji subsections are common: 🗄️ Data Model, ⚙️ core engine/logic, 🔌 API,
-🚨 new risks, 🛡️ access control.
+don't use them - match the corpus you're writing into.
 
 ## Write so an outsider understands
 
@@ -95,8 +102,10 @@ anyone a question. This is a hard requirement, not a nice-to-have.
   alert against current data and emits instances)".
 - **Explain why before how.** Open each Design Summary subsection with one
   sentence on the problem that piece solves, then the mechanics.
-- **Spell out the current behavior you are changing.** A reader who does not know
-  today's flow cannot judge the new one. One or two sentences is enough.
+- **Spell out the current behavior you are changing - in one or two sentences,
+  never more.** A reader who does not know today's flow cannot judge the new one,
+  and the same reader will not read a long recap. "Explains well" and "reads
+  fast" are both requirements; length is a budget, not a proxy for care.
 - **Diagrams and tables over paragraphs.** They are the fastest way for a stranger
   to get the shape. Label every box and column.
 - **The approved Technical Names carry the precision in the detailed design.**
@@ -166,9 +175,22 @@ say that at the top rather than burying it.
 - **Short headings, no parentheticals.** "Mock service in the web app", not "The
   mock - WireMock service in the web app (mirror of the auth mock)". Cut
   qualifiers like "(non-product)".
+- **"Not too technical" is a hard rule, not a tone preference.** The test for
+  every detail: does it change what a reviewer approves, or what an implementer
+  builds first? If not, cut it - it belongs in the PR. This is the rule behind
+  the two below.
 - **No infra minutiae.** Image versions, port numbers, CLI flags, and volume
   mounts belong in the PR, not the design. Name the service and the file it lives
   in; one line.
+- **No schema internals.** Indexes, primary-key mechanics, and constraint
+  internals belong in the PR. The design names the tables, what each means, and
+  the columns that carry a decision - see 🗄️ Data model in `sections.md`.
+- **No phase headers in Requirements.** Phasing is a delivery detail; it lives in
+  Tasks & Phases. Requirements describe what ships now. Mention a future
+  extension in one sentence where it justifies a design choice, and nowhere else.
+- **Explicit scope statements are quoted, not diluted.** When the user narrows
+  the scope ("only X migrates"), the doc says so plainly and describes no work
+  outside it.
 - **One heading level per depth.** The Design Summary may use themed `##`/`###`
   subsections and numbered components, but don't stack a fourth level - sub-parts
   of a component get **bold run-in labels** as their own paragraph, not `####`.
@@ -229,6 +251,12 @@ access control on any new API or data path. Each is written up in `sections.md`.
 request flow across services, state machines, call sequences, table lineage, phase
 dependencies. A picture is the fastest way for a reader from another team to get
 the shape.
+
+**In moderation.** Add a diagram where a picture shows what prose struggles to -
+the data model, a write path versus a read path, a staged migration. Two or three
+small diagrams beat many, and a trivial flow gets no diagram at all. A diagram
+that repeats what one sentence already said is decoration, and decoration erodes
+trust in the diagrams that matter.
 
 **But only for a flow you designed.** An architecture diagram of an **existing**
 system you inferred rather than read stays a placeholder with a written brief. A

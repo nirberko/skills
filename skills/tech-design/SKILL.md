@@ -121,6 +121,12 @@ Similar prior art:  has something this shape been built here already?
 Couldn't find:      named holes, with what you searched for
 ```
 
+**If a prototype exists** - a Figma link, a spike branch, a clickable mock - read
+it now, screen by screen. It is a requirements source, and it is usually ahead of
+the written request: extra columns, bulk actions, validation rules, and
+cross-navigation live there and nowhere else. Before handover you will diff the
+doc against it (`references/review.md` → *The prototype diff*).
+
 A design that mirrors an accepted one gets reviewed faster. If the user has a
 corpus of past designs - a Confluence space, a `docs/designs/` directory - grep
 it for the closest prior design of the same shape (a schema change, a new API, a
@@ -335,13 +341,20 @@ usually two designs.
 
 **Open `references/sections.md` now.**
 
-The canonical section order is in `references/conventions.md`. It is a starting
-point, not a form. **A design with five sections that all say something beats
-twelve where seven say "N/A".** Propose the section list for *this* design as a
-short table - section, and one line on why it's in or out - and let the user cut
-or add. The per-piece subsections from 7a go in the list too, by name.
+The canonical section order is in `references/conventions.md`. **A design with
+five sections that all say something beats twelve where seven say "N/A".**
+Propose the section list for *this* design as a short table - section, and one
+line on why it's in or out - and let the user cut or add. The per-piece
+subsections from 7a go in the list too, by name.
 
-Always in: Overview, Requirements, Design Summary, Open questions.
+Always in: Overview, Requirements, Design Summary, Open questions (last).
+
+**The Design Summary has a fixed menu, in a fixed order:** 🗄️ Data model, 🔌 API,
+⚙️ Core engine behavior, 🛡️ Access control, ⚡ Performance, 🔍 Filtering & query
+surfaces, 🚚 Migration & backfill. Drop the slots that don't apply; never reorder
+them. A change with a UI gets a separate 🖥️ Frontend section carrying the
+end-to-end user flow. The choosing happens *inside* the menu - which slots stay -
+not in inventing a new structure per design.
 
 Four sections are risk-carrying, and dropping one silently is how a design ships
 with a hole in it:
@@ -351,8 +364,9 @@ with a hole in it:
 > cost change" is a fine line. Silence is not - silence reads as "not considered",
 > and that is the reviewer's first question.
 
-For a small design these are bold run-in paragraphs inside the Design Summary
-rather than top-level sections. Either is fine. Absent is not.
+Migration and Security & Access live as slots of the Design Summary menu;
+Rollout & Rollback and Cost are top-level sections. Shortened is fine. Absent is
+not.
 
 ---
 
@@ -407,15 +421,32 @@ While writing:
 - **Be concrete.** Real model classes, schemas, queries, YAML/SQL, exact file
   paths. Name what each component **reuses** - reusing existing code over
   building new is a first-class value in review, so make it visible.
-- **Keep a live Open Questions list.** Add to it the moment something is
-  unresolved. Reconstructed at the end it contains the ones you remember and none
-  of the ones you quietly assumed away. Each gets an owner and what it blocks.
-- **Diagrams: render the flows you designed, placeholder the ones you inferred.**
-  A pipeline or state machine you are proposing gets a real rendered Mermaid
-  diagram (recipe and the curl check in `references/conventions.md`). An
-  architecture diagram of an existing system you inferred rather than read stays a
-  placeholder with a written brief, because a wrong diagram is believed far longer
-  than a wrong paragraph and it gets screenshotted into other documents.
+- **Hold the altitude.** "Not too technical" is a hard rule, not a tone
+  preference: if a detail does not change what a reviewer approves or what an
+  implementer builds first, cut it. Indexes, primary-key mechanics, and
+  constraint internals belong in the PR. Show APIs as short code blocks, not
+  prose about them.
+- **Length follows complexity, not importance.** A straightforward mechanism
+  gets one paragraph, even when it is user-facing. Never pad a simple section to
+  look thorough.
+- **Any rule, automation, or engine gets a lifecycle table** - on create, on
+  edit, on disable, on delete, on manual override, as action → effect rows. It
+  is the section readers argue about most, and it stays short. Template in
+  `references/sections.md`.
+- **Keep a live Open Questions list - a running record, not a snapshot.** Add to
+  it the moment something is unresolved. Each gets an owner and what it blocks.
+  A resolved question is never deleted: strike it through and attach the
+  resolution in place, so the review history shows what was already addressed.
+  The section is always the last one in the doc.
+- **Diagrams: in moderation, and render only the flows you designed.** Add one
+  where a picture shows what prose struggles to - the data model, write/read
+  paths, a staged migration. Two or three small diagrams beat many; a trivial
+  flow gets none. A pipeline or state machine you are proposing gets a real
+  rendered Mermaid diagram (recipe and the curl check in
+  `references/conventions.md`). An architecture diagram of an existing system you
+  inferred rather than read stays a placeholder with a written brief, because a
+  wrong diagram is believed far longer than a wrong paragraph and it gets
+  screenshotted into other documents.
 - **The detailed design is where the approved Technical Names carry the
   precision.** Schemas, queries, class and column names go in unchanged. What does
   not come with them is loose prose: the sentences around the code follow the same
@@ -431,10 +462,18 @@ While writing:
 
 ## Output, self-check, publish
 
-Run the self-check in `references/review.md` before handing anything over. Then
-**publish only when the user asks.** It is an outward-facing write: confirm the
-title, space, and parent page first, then follow `references/publishing.md`.
+Run the self-check in `references/review.md` before handing anything over. **If a
+prototype exists, run the prototype diff too** (same file): every capability the
+prototype shows and the text missed is a finding, and every conflict between the
+prototype and the written spec is escalated to the user, never silently resolved.
+
+Then **publish only when the user asks.** It is an outward-facing write: confirm
+the title, space, and parent page first, then follow `references/publishing.md`.
 Default to a draft unless they say publish live, and return the page URL.
+**Updating an already-published page has its own rules** - fetch the current
+version and edit on top of it, never resend a full body, preserve `data-local-id`
+anchors, and treat comment-anchored text as near-immutable. They are in
+`references/publishing.md` → *Updating a published page*.
 
 ---
 
@@ -457,11 +496,24 @@ Default to a draft unless they say publish live, and return the page URL.
    traps.
 9. **Walk one item through the system before writing any of it**, including the
    boring case, the deletion case, and the failure case.
-10. **Sections are chosen, not stamped.** But a skipped Migration, Rollout,
-    Security or Cost section says why in one line.
+10. **Sections are chosen from the fixed menu, not invented.** Slots that don't
+    apply are dropped; a skipped Migration, Rollout, Security or Cost section
+    says why in one line. The order never changes, and Open questions is always
+    last.
 11. **Confidence tagged** - proven, likely, guess.
-12. **Render diagrams you designed; placeholder diagrams you inferred.**
-13. **Publish only when asked.**
+12. **Render diagrams you designed; placeholder diagrams you inferred.** Two or
+    three small ones beat many; a trivial flow gets none.
+13. **Requirements describe what ships now.** No phase headers in Requirements;
+    phasing lives in Tasks & Phases. A future extension gets one sentence where
+    it justifies a design choice, and nowhere else.
+14. **An explicit scope statement is law.** "Only X migrates" appears plainly in
+    the doc, and no work outside it is described.
+15. **Length follows complexity, not importance.** If a detail does not change
+    what a reviewer approves or an implementer builds first, it goes to the PR.
+16. **A prototype is a requirements source.** Diff the doc against it before
+    calling the doc done; conflicts are escalated, not silently resolved.
+17. **Publish only when asked.** Updating a published page starts from a fresh
+    fetch of it, never from a full-body resend.
 
 ## Anti-patterns
 
@@ -494,6 +546,20 @@ Do not:
 - Save Open Questions for the end.
 - Skip Cost or Security silently because they felt like overhead. One line saying
   why costs nothing and stops the reviewer's first question.
+- Organize Requirements around "phase 1 / phase 2". Phasing is a delivery detail;
+  it lives in Tasks & Phases.
+- Pad a simple section so it looks as thorough as the hard ones. A one-paragraph
+  mechanism gets one paragraph, even when it is user-facing.
+- Put indexes, primary-key mechanics, or constraint internals in the data model,
+  or describe an API in prose where a five-line code block would do.
+- Ship a rule or engine without its lifecycle table - on create, on edit, on
+  disable, on delete, on manual override.
+- Delete a resolved open question. Strike it through and attach the resolution;
+  the record is what stops it being re-raised.
+- Update a published page by resending the full body. It silently overwrites
+  everyone else's edits and orphans their inline comments.
+- Resolve a conflict between the prototype and the written spec yourself. Show
+  both versions and escalate.
 - Write a design that is correct for new data and undefined for the rows that
   already exist. That is the most common way a reviewed design fails in
   production.

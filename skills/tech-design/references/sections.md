@@ -18,44 +18,52 @@ all of them.
 | Section | Include when |
 |---|---|
 | 📋 Overview | Always |
-| 🎯 Requirements | Always - framing, the problem, scope, goals, non-goals |
+| 🎯 Requirements | Always - framing, the problem, scope, goals, non-goals. No phase headers |
 | 🏛️ Current Architecture | Something already exists that this changes |
 | 💻 Technical Overview | Larger designs, as a breakdown by concern |
-| 🧑‍🎨 Design Summary - how the pieces fit | Always |
-| One numbered subsection per new component | The design introduces new pieces |
+| 🧑‍🎨 Design Summary - the fixed menu | Always |
+| ├ 🗄️ Data model | The design adds or changes tables |
+| ├ 🔌 API | The design adds or changes an API surface |
+| ├ ⚙️ Core engine behavior | There is a rule, automation, or engine - with its lifecycle table |
+| ├ 🛡️ Access control | ⚠️ New data, new surface, new auth path, or a boundary crossed |
+| ├ ⚡ Performance | A path with a real load, latency, or volume question |
+| ├ 🔍 Filtering & query surfaces | Users or systems search, filter, or list the new data |
+| └ 🚚 Migration & backfill | ⚠️ Existing data, traffic, or clients must move |
 | Possible Solutions | More than one credible approach existed |
-| 🔄 End-to-End Flow | The runtime path is non-trivial |
-| 🚚 Migration & Backfill | ⚠️ Existing data, traffic, or clients must move |
+| 🖥️ Frontend | The change has a UI - carries the end-to-end user flow |
+| 🔄 End-to-End Flow | The backend runtime path is non-trivial |
 | 🚦 Rollout & Rollback | ⚠️ It reaches production |
 | 🧪 Testing Strategy | Correctness is hard to eyeball, or it spans services |
 | 📊 Monitoring & Observability | It runs in production |
-| 🛡️ Security & Access | ⚠️ New data, new surface, new auth path, or a boundary crossed |
 | 💰 Cost | ⚠️ New infrastructure, per-unit cost drivers, or vendor spend |
-| ✅ Tasks & Phases | Anything multi-step |
+| ✅ Tasks & Phases | Anything multi-step. Phasing lives here and only here |
 | Did Not Address | Explicit scope exclusions worth naming |
 | ⚠️ Risks | Anything with real downside |
-| ❓ Open questions | Always |
 | 🔗 References | There is prior art, a ticket, or an incident to point at |
+| ❓ Open questions | Always, and always the last section |
 
 ⚠️ = **skipping requires a one-line reason in the doc.** "No new infrastructure,
 so no cost change" is a fine line. Silence is not - silence reads as "not
 considered", and that is the reviewer's first question.
 
-**Where they live.** For a normal-size design, Migration, Rollout, Testing,
-Monitoring, Security and Cost are **bold run-in paragraphs inside the Design
-Summary**, one or two lines each. They become their own top-level sections only
-when there is enough to say that a reviewer would scroll to find them - a live
-migration, a staged rollout across tenants, a new external surface. Either
-placement is fine. Absent is not.
+**The menu is fixed on purpose.** A reader who has seen one design from this
+skill finds the data model, the API, and the migration story in the same place in
+the next one. Drop a slot that does not apply; never reorder the slots, and never
+invent a new slot when the content fits an existing one.
+
+**Slot length follows complexity, not importance.** A straightforward mechanism
+gets one paragraph, even when it is user-facing. A subtle mechanism gets the
+space. Never pad a simple slot to look thorough.
 
 ## Table of Contents
 - [📋 Overview](#-overview)
 - [🎯 Requirements](#-requirements)
 - [🏛️ Current Architecture](#️-current-architecture)
 - [💻 Technical Overview](#-technical-overview)
-- [🧑‍🎨 Design Summary](#-design-summary)
+- [🧑‍🎨 Design Summary and its fixed menu](#-design-summary)
 - [One subsection per new component](#one-subsection-per-new-component)
 - [Possible Solutions](#possible-solutions)
+- [🖥️ Frontend](#️-frontend)
 - [🔄 End-to-End Flow](#-end-to-end-flow)
 - [🚚 Migration & Backfill](#-migration--backfill-️)
 - [🚦 Rollout & Rollback](#-rollout--rollback-️)
@@ -116,6 +124,19 @@ arguable on its own terms.
 
 **3. A numbered `Scope` list** - each item one concrete capability the design must
 deliver, product-facing, with a nested sub-bullet per case where needed.
+
+**Requirements describe what ships now, with no phase headers.** Phasing is a
+delivery detail; it lives in Tasks & Phases and nowhere else. Do not organize the
+Scope list or the goals around "phase 1 / phase 2" - a reviewer arguing about
+requirements should not have to argue about sequencing at the same time. Mention
+a future extension in one sentence, in the place where it justifies a design
+choice ("the table keeps a `kind` column so alert rules can join later"), and
+nowhere else.
+
+**Respect explicit scope statements.** When the user narrows the scope ("only
+manual policies migrate"), the doc says so plainly - in the Scope list or as a
+non-goal - and describes no work outside it. A doc that quietly designs beyond a
+stated boundary reads as not having listened.
 
 **4. Goals and Non-Goals.** Tests for both are in `SKILL.md` Phase 5. Group goals
 as reviewers read them: functional, operational (latency, reliability, cost),
@@ -217,26 +238,67 @@ UPLOADER  (its own schedule, every 15 minutes)
 **4. Why it's split this way.** A short list of what the structure buys, one line
 each: what stops being a problem, what becomes ordinary, what becomes visible.
 
-**5. Then the numbered component subsections** - see below.
+**5. Then the fixed menu of subsections**, in this order, dropping the ones that
+do not apply:
 
-For each subsection, pull in what it needs, using the house idioms:
+**🗄️ Data model.** Name each table and say what it means - one sentence of
+meaning per table, then only the columns that carry a decision (the state column
+the engine reads, the foreign key that fixes ownership, the timestamp that drives
+the schedule). Say **which** database when the system has more than one. **Omit
+indexes, primary-key mechanics, and constraint internals - they belong in the PR,
+not the design.** A constraint earns a line only when it enforces an invariant
+the design depends on ("one active rule per tenant - a uniqueness rule enforces
+this"). Schema changes to an existing table go as **Removed / New / Renamed /
+Unchanged** field tables.
+
+**🔌 API.** The real mutations, queries, or endpoints as short code blocks, not
+prose descriptions of them. A reviewer reads `POST /exports/{format}` with a
+five-line body faster than a paragraph about it. For a schema change, show **old
+query vs new query** as two code blocks with `# will be deprecated` /
+`# new-field` comments.
+
+**⚙️ Core engine behavior.** What the rule, automation, or engine does, and the
+lifecycle table (below). This is where the six-part component template earns its
+keep.
+
+**🛡️ Access control.** Who can reach the new surface and which mechanism
+enforces it. One paragraph when the answer is "the existing permission model,
+unchanged" - see Security & Access below for when it grows.
+
+**⚡ Performance.** Only for a path with a real load, latency, or volume
+question, and with numbers. Skip silently when there is none - this slot is not
+⚠️-guarded.
+
+**🔍 Filtering & query surfaces.** How users or systems search, filter, sort, and
+list the new data - the surfaces, not the index strategy behind them.
+
+**🚚 Migration & backfill.** ⚠️ What happens to the rows that already exist - see
+the Migration & Backfill entry below.
+
+New components slot into the menu entry they belong to: a state table under Data
+model, a job under Core engine behavior. A component big enough for its own
+numbered subsection (see below) still lives inside its slot.
+
+House idioms, wherever they fit:
 
 - **Location.** The exact directory or file the component lives in.
 - **"Reuses:" list.** The existing utilities, models, services, and hooks it
   builds on. Reusing existing code over building new is a first-class value in
   review - make it visible. A **Reuse vs Build** two-column table is the idiom
   when a change spans many pieces.
-- **DB tables** as a Column / Type / Null / Notes spec table, plus constraints and
-  indexes as bullets. Say **which** database, explicitly, when the system has more
-  than one.
-- **Schema changes to an existing table** as separate **Removed / New / Renamed /
-  Unchanged** field tables.
-- **UI features** as a field-mapping table per page or table: "UI column → backend
-  source", with a source legend.
-- **API** as real queries, mutations, or REST endpoints (`POST /path/{param}` with
-  a field table). For a schema change, show **old query vs new query** as two code
-  blocks with `# will be deprecated` / `# new-field` comments.
 - **Config** as real JSON or YAML blocks.
+
+**The lifecycle table.** For any rule, automation, or engine, enumerate the
+lifecycle edge cases as an action → effect table - it beats prose here, and it is
+the part readers actually argue about. Keep it short:
+
+| Action | Effect |
+|---|---|
+| Rule created | ... |
+| Rule edited | What happens to work already produced by the old version? |
+| Rule disabled | Does existing output stay, close, or freeze? |
+| Rule deleted | ... |
+| Manual override | Does the engine respect it, revert it, or skip the item? |
 
 **What good looks like:** someone reads only the high-level part of this section
 and can argue with the design. If they'd need the schema to disagree, it's too
@@ -250,9 +312,10 @@ architecture from a `CREATE TABLE`, which they will do incorrectly.
 ## One subsection per new component
 
 **Include when:** the design introduces new pieces, which is most designs. One
-subsection each, numbered, inside the Design Summary. **Never describe two
-components in one subsection:** the reviewer has to hold both in their head to
-check either.
+subsection each, numbered, inside the menu slot the component belongs to - a
+state table under 🗄️ Data model, a job under ⚙️ Core engine behavior. **Never
+describe two components in one subsection:** the reviewer has to hold both in
+their head to check either.
 
 A component is anything with its own responsibility and its own failure mode. A
 table. A store. A job. A service. A queue. A new API surface.
@@ -363,6 +426,39 @@ reads differently and it damages the rest of the doc.
 
 ---
 
+## 🖥️ Frontend
+
+**Include when:** the change has a UI. A separate top-level section, after the
+Design Summary - frontend work reviewed as an afterthought inside a backend
+subsection gets afterthought review.
+
+**Contains:**
+
+- **The end-to-end user flow**, numbered, screen by screen: what the user sees,
+  what they do, what each action calls, and what changes on screen as a result.
+  This is the frontend counterpart of the backend End-to-End Flow section.
+- **Field-mapping tables** per page or table: "UI column → backend source", with
+  a source legend.
+- The states that are easy to forget: empty, loading, error, and permission-
+  denied.
+- New components or pages, one line each, with where they live and what they
+  reuse.
+
+**When a prototype exists** (Figma, a spike branch), the flow follows the
+prototype, and every capability visible in it - extra columns, bulk actions,
+validation rules, cross-navigation - appears here or is named as out of scope.
+The diff against the prototype is part of the pre-handover review; see
+`review.md`.
+
+**Ask:** is there a prototype or mock? Which existing components does this build
+from? What does the user see while the backend works?
+
+**Goes wrong:** describes the happy-path screen and none of the states around it;
+or restates the prototype in prose instead of adding what the prototype cannot
+show - sources, permissions, and error behavior.
+
+---
+
 ## 🔄 End-to-End Flow
 
 **Include when:** the runtime path is non-trivial. Goes near the end, before Open
@@ -391,7 +487,9 @@ the design, not the sentence. Full sweep in `review.md`.
 
 **Include when:** existing data, existing traffic, or existing clients have to
 move. Anything that adds a field, a state, or a rule to something that already has
-rows.
+rows. It is the last slot of the Design Summary menu; promote it to its own
+top-level section only when the migration is staged enough that a reviewer would
+scroll to find it.
 
 **Contains:**
 
@@ -487,7 +585,8 @@ affected?"
 
 **Include when:** new data is stored, a new external surface appears, an auth path
 changes, credentials or secrets are involved, or data crosses a trust boundary.
-Can live as a run-in block inside the Design Summary for a small change.
+Its home is the 🛡️ Access control slot of the Design Summary menu; promote it to
+its own top-level section when there is this much to say.
 
 **Contains:** what new data is stored or moved and how sensitive it is; who can
 reach the new surface and how they're authenticated and authorised; data at rest
@@ -577,8 +676,15 @@ blocks**:
 |---|---|---|
 
 Tag decisions owned by someone outside engineering *(product)*, *(design)*,
-*(legal)*. Keep resolved ones in place, struck through with a short "✅ resolved
-(reason)", so the review history stays readable.
+*(legal)*.
+
+**Open questions are a running record, not a snapshot.** Keep every question ever
+raised, including across doc updates. A resolved one is never deleted: strike it
+through and attach its resolution in place ("~~Batch size?~~ ✅ resolved - 200,
+matches the provider rate limit"). The review history then shows what was already
+addressed, and nobody re-raises a settled question in the next review round. The
+section is always the **last** one in the doc, so reviewers know where the live
+end of the conversation is.
 
 **Build this list as you go, from Phase 1.** Reconstructed at the end it contains
 the ones you remember and none of the ones you quietly assumed away.

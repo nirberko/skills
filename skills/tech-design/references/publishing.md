@@ -88,8 +88,25 @@ preserves inline comments and local ids, which markdown round-trips lose.
 - **Default to `status="draft"`** unless the user says publish or live. A draft is
   private to the author and safe to iterate on. Switch to `"current"` to make it
   visible in the space.
-- **Updating** an existing page later: use `updateConfluencePage` (load via
-  ToolSearch) with the page id, not a second create. Fetch the current body with
-  `getConfluencePage` `contentFormat="html"` first and edit that - it's the
-  round-trip-safe path that keeps other people's edits, mentions, and inline
-  comments intact.
+## Updating a published page
+
+Use `updateConfluencePage` (load via ToolSearch) with the page id, not a second
+create. Four rules, all of them about not destroying other people's work:
+
+1. **Always fetch the current version first and edit on top of it.** Call
+   `getConfluencePage` with `contentFormat="html"` and apply your changes to
+   *that* body. Never resend a full body built from your local file or from
+   memory of what you published - a full-body resend silently overwrites every
+   edit anyone made on the page between versions, and nobody finds out until
+   they look for their change.
+2. **Preserve existing `data-local-id` attributes** on every node you keep or
+   move. Inline comments anchor to them; a rewritten id orphans the comment
+   thread. (New nodes still omit `data-local-id` - Confluence assigns them.)
+3. **Treat comment-anchored text as near-immutable.** A sentence with an inline
+   comment on it is part of a conversation. Rewriting it detaches the thread and
+   erases the context the reply was written against. If the sentence must
+   change, prefer adding the correction next to it; reword the anchored text
+   itself only when it is plainly wrong, and say so to the user.
+4. **Edit surgically.** Change the sections that changed and leave the rest of
+   the fetched body byte-for-byte. The smaller the diff, the less there is to
+   destroy.

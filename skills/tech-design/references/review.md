@@ -8,6 +8,7 @@ design is still cheap to change; run the self-check before handing anything over
 - [The sweep](#the-sweep)
 - [Rating what the sweep finds](#rating-what-the-sweep-finds)
 - [Two questions after the sweep](#two-questions-after-the-sweep)
+- [The prototype diff](#the-prototype-diff)
 - [The self-check](#the-self-check)
 - [The hostile reviewer](#the-hostile-reviewer)
 
@@ -86,6 +87,29 @@ done condition isn't handled, it's remembered.
    a new user-visible promise. These don't get removed. Name them before agreeing
    to them.
 
+## The prototype diff
+
+When a prototype exists - a Figma file, a spike branch, a clickable mock - **diff
+the doc against it before calling the doc done.** The prototype is a requirements
+source, and it is usually ahead of the written spec.
+
+Walk every screen and interaction in the prototype and check each against the
+doc. The things the text most often misses:
+
+- extra columns in a table or list
+- bulk actions (select-all, multi-delete, export)
+- validation rules visible in the forms
+- cross-navigation - links from this feature into others, and back
+
+Each miss is one of two findings, and both go to the user:
+
+1. **The doc missed a requirement the prototype shows.** Add it, or record it as
+   explicitly out of scope.
+2. **The prototype and the written spec conflict.** This is a finding to
+   **escalate, not to silently resolve.** Name the conflict, show both versions,
+   and let the user pick. Picking quietly bakes one side's mistake into the
+   design.
+
 ## The self-check
 
 Run all of it before handing the doc over.
@@ -95,6 +119,10 @@ Run all of it before handing the doc over.
 - [ ] Could someone who reads only Requirements disagree with the decision? If
       they'd have to read further to disagree, it's too vague.
 - [ ] Does the problem statement contain any solution words? Remove them.
+- [ ] Are there phase headers anywhere in Requirements? Move the phasing to
+      Tasks & Phases; Requirements describe what ships now.
+- [ ] Did the user state an explicit scope boundary ("only X migrates")? The doc
+      says it plainly and describes no work outside it.
 - [ ] Is there a goal that no reasonable design could fail? Delete it.
 - [ ] Does every non-goal trace to something that actually came up?
 
@@ -111,6 +139,25 @@ Run all of it before handing the doc over.
       failure case, not just the first-time case?
 - [ ] Is every operational goal matched by a metric in Monitoring?
 - [ ] Are the four ⚠️ sections either present, or skipped with a stated reason?
+- [ ] Does every rule, automation, or engine have its lifecycle table - on
+      create, on edit, on disable, on delete, on manual override?
+- [ ] If a prototype exists, was the prototype diff run, and is every conflict
+      escalated rather than silently resolved?
+
+**The altitude**
+
+- [ ] Do the Design Summary slots appear in the fixed menu order - data model,
+      API, core engine, access control, performance, filtering, migration?
+- [ ] Any indexes, primary-key mechanics, or constraint internals in the data
+      model? Move them to the PR, unless one enforces a design invariant.
+- [ ] Is any API described in prose where a short code block would do? Replace
+      it.
+- [ ] Pick the simplest mechanism in the doc. Is its section one paragraph? If
+      it's longer, it was padded to look thorough - cut it.
+- [ ] For each remaining detail: does it change what a reviewer approves or what
+      an implementer builds first? If not, cut it.
+- [ ] Count the diagrams. More than three, or one for a trivial flow? Cut the
+      weakest.
 
 **The writing**
 
@@ -142,6 +189,8 @@ most in a design doc:
 - [ ] Any revision history or "changed from the previous version" narrative?
       Delete it.
 - [ ] Does every open question have an owner and something it blocks?
+- [ ] Is Open questions the last section, and is every resolved question still
+      there - struck through with its resolution attached, never deleted?
 - [ ] Does every rendered diagram URL return `200`? Check it - a Mermaid syntax
       error returns an error image that silently ships as a broken diagram.
 
