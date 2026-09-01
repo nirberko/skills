@@ -1,6 +1,6 @@
 # skills
 
-Five agent skills for the things that eat the most time on an unfamiliar codebase:
+Six agent skills for the things that eat the most time on an unfamiliar codebase:
 understanding code you didn't write, getting a design approved, and getting through
 review. Plus an output style, for when the problem isn't the code — it's that the
 answer didn't land.
@@ -14,6 +14,9 @@ answer didn't land.
   without asking you a question, ready to publish to Confluence.
 - **`/cr`** — a pre-PR self-review that learns your team's recurring review comments
   and leaves them on your diff before a reviewer does.
+- **`/cr-post`** — takes those findings and leaves them on the PR itself: one review,
+  each comment on its line, short, in Simplified Technical English, indistinguishable
+  from a person's.
 - **`/tldr`** — the last answer was too long. Type it, and the same answer comes back
   in one or two short paragraphs, with the context you were missing.
 - **Plain** *(output style)* — every answer, every turn: context first, then
@@ -69,12 +72,13 @@ cp -R skills/output-styles/* ~/.claude/output-styles/
 | `tech-design` | you or the model | Writes a technical design in eight checkpointed phases instead of one turn: reads the code first, rates every term in the request known/assumed/unknown, states the gap before proposing anything, tests each goal against its non-goal, and gets an approach agreed *in ordinary words* before a single table or endpoint is named. Then names the new pieces, walks one item through the whole system — including the quiet run, the deletion, and the crash halfway — and gives each piece a section covering why-this-way, what-it-owns, how-it-fails and the traps. Every sentence of the document is ASD-STE100 Simplified Technical English, with the glossary pass doubling as its approved Technical Names list. Output is Confluence HTML+ (native @mention chips, status pills, panels) or plain markdown, with Mermaid flows rendered as images and every URL verified 200 before publishing. |
 | `tldr` | you | Re-says the message you just read in one or two short paragraphs — what it said and why it matters to you, in Simplified Technical English and your project's own vocabulary. No headings, no bullets, no code, no repeated steps. The long version stays above it. |
 | `cr` | you | Reviews the current branch — committed *and* uncommitted — against your repo's ruleset, and returns GitHub-style inline comments: severity code, `file:line`, the offending lines, a blunt one-line TLDR, and a one-click ` ```suggestion ` fix. |
+| `cr-post` | you or the model | Posts a `/cr` run on the PR. Resolves the PR, drops findings whose line isn't in the diff (uncommitted work, pre-existing code) and ones already commented on, rewrites each TLDR as a short Simplified Technical English comment with no severity code and no bot markers, keeps the ` ```suggestion ` block, shows a preview, and posts the lot as one `COMMENT` review once you say yes. |
 
 Trigger phrases: `/learn`, "teach me X", "walk me through X" · `/explain`, "what does
 this do", "I don't understand this PR comment" · `/tech-design`, "write a design doc
-for X", "draft a TDR" · `/cr`, "review my changes", "am I ready to push" · `/tldr`
-(you only — the model never reaches for it, because only you know when an answer was
-too long).
+for X", "draft a TDR" · `/cr`, "review my changes", "am I ready to push" ·
+`/cr-post`, "post these on the PR", "leave the review on GitHub" · `/tldr` (you only —
+the model never reaches for it, because only you know when an answer was too long).
 
 `tech-design` and the **Plain** output style share one register: ASD-STE100 Simplified
 Technical English. Plain controls how answers land in the terminal; `tech-design`
@@ -200,6 +204,29 @@ Re-run `/cr update` every few weeks. It syncs only comments newer than the last 
 and re-tightens the file as it grows.
 
 Requires the [`gh`](https://cli.github.com) CLI, authenticated, plus `jq`.
+
+### `/cr-post` puts them on the PR
+
+Findings in your terminal are invisible to everyone else. `/cr-post` takes the run
+above and leaves it on the PR as one review, each comment anchored to its line:
+
+`````
+src/features/orders/OrderTable.tsx:135
+  this string is in 3 places. move it to a const.
+  ```suggestion
+  await page.setDescription(DESCRIPTION)
+  ```
+`````
+
+The severity code, the category number and the emoji don't ship — they were handles
+for you, not a comment. What ships is one short sentence in ASD-STE100 Simplified
+Technical English: active voice, present tense, one idea, the fix stated. It reads
+like a colleague typing fast, because that's the only register that gets acted on.
+
+It also refuses to lie about what's on the PR. A finding on an uncommitted line, on
+pre-existing code outside a hunk, or on a line someone already commented on gets
+dropped and reported — never posted at the wrong place. Nothing goes up until you
+see the exact preview and say yes.
 
 ### Your rules stay yours
 
