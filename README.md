@@ -1,6 +1,6 @@
 # skills
 
-Four agent skills for the things that eat the most time on an unfamiliar codebase:
+Six agent skills for the things that eat the most time on an unfamiliar codebase:
 understanding code you didn't write, getting a design approved, and getting through
 review. Plus an output style, for when the problem isn't the code — it's that the
 answer didn't land.
@@ -9,10 +9,16 @@ answer didn't land.
   small stop at a time, and quizzes you before moving on.
 - **`/explain`** — one complete plain-language answer about anything you don't
   understand: a PR thread, a stack trace, a feature, a ticket.
-- **`/tech-design`** — a design doc an engineer from another team can follow without
-  asking you a question, ready to publish to Confluence.
+- **`/tech-design`** — a design doc written *gradually*, one checkpointed section at a
+  time, in Simplified Technical English, that an engineer from another team can follow
+  without asking you a question, ready to publish to Confluence.
 - **`/cr`** — a pre-PR self-review that learns your team's recurring review comments
   and leaves them on your diff before a reviewer does.
+- **`/cr-post`** — takes those findings and leaves them on the PR itself: one review,
+  each comment on its line, short, in Simplified Technical English, indistinguishable
+  from a person's.
+- **`/tldr`** — the last answer was too long. Type it, and the same answer comes back
+  in one or two short paragraphs, with the context you were missing.
 - **Plain** *(output style)* — every answer, every turn: context first, then
   Simplified Technical English, in your project's own vocabulary.
 
@@ -63,12 +69,21 @@ cp -R skills/output-styles/* ~/.claude/output-styles/
 |---|---|---|
 | `learn` | you or the model | Multi-turn tutorial on one flow in this repo. Picks a trace with you, splits it into 6–10 stops, then teaches one idea per turn: plain-language claim, a real ≤10-line snippet with `file.py:42` citations, a multiple-choice check. Saves every lesson to an Obsidian vault so it accumulates and can be resumed. |
 | `explain` | you or the model | One-shot explainer. Classifies the input (PR URL, pasted review comment, code block, error, feature name, ticket), reads the actual code, and answers with a moving-parts table, an execution-order flow, and cited line numbers. Nothing is assumed obvious. |
-| `tech-design` | you or the model | Writes a technical design as Confluence HTML+ (native @mention chips, status pills, panels) or plain markdown. Fixed section order, an Overview table, a Design Summary of concrete models/queries/file paths with a `Reuses:` list per component, Option 1/Option 2 with a first-person recommendation, and phases with a Definition of Done. Renders flows as Mermaid images and verifies every URL returns 200 before publishing. |
+| `tech-design` | you or the model | Writes a technical design in eight checkpointed phases instead of one turn: reads the code first, rates every term in the request known/assumed/unknown, states the gap before proposing anything, tests each goal against its non-goal, and gets an approach agreed *in ordinary words* before a single table or endpoint is named. Then names the new pieces, walks one item through the whole system — including the quiet run, the deletion, and the crash halfway — and gives each piece a section covering why-this-way, what-it-owns, how-it-fails and the traps. Every sentence of the document is ASD-STE100 Simplified Technical English, with the glossary pass doubling as its approved Technical Names list. Output is Confluence HTML+ (native @mention chips, status pills, panels) or plain markdown, with Mermaid flows rendered as images and every URL verified 200 before publishing. |
+| `tldr` | you | Re-says the message you just read in one or two short paragraphs — what it said and why it matters to you, in Simplified Technical English and your project's own vocabulary. No headings, no bullets, no code, no repeated steps. The long version stays above it. |
 | `cr` | you | Reviews the current branch — committed *and* uncommitted — against your repo's ruleset, and returns GitHub-style inline comments: severity code, `file:line`, the offending lines, a blunt one-line TLDR, and a one-click ` ```suggestion ` fix. |
+| `cr-post` | you or the model | Posts a `/cr` run on the PR. Resolves the PR, drops findings whose line isn't in the diff (uncommitted work, pre-existing code) and ones already commented on, rewrites each TLDR as a short Simplified Technical English comment with no severity code and no bot markers, keeps the ` ```suggestion ` block, shows a preview, and posts the lot as one `COMMENT` review once you say yes. |
 
 Trigger phrases: `/learn`, "teach me X", "walk me through X" · `/explain`, "what does
 this do", "I don't understand this PR comment" · `/tech-design`, "write a design doc
-for X", "draft a TDR" · `/cr`, "review my changes", "am I ready to push".
+for X", "draft a TDR" · `/cr`, "review my changes", "am I ready to push" ·
+`/cr-post`, "post these on the PR", "leave the review on GitHub" · `/tldr` (you only —
+the model never reaches for it, because only you know when an answer was too long).
+
+`tech-design` and the **Plain** output style share one register: ASD-STE100 Simplified
+Technical English. Plain controls how answers land in the terminal; `tech-design`
+controls how the document reads. The rule set is the same, so a design doc and the
+conversation about it sound like one voice.
 
 `learn` and `explain` are two halves of the same problem. `explain` is one answer;
 `learn` is a course. Ask `explain` when you need to get on with it, `learn` when
@@ -107,7 +122,7 @@ a reader shouldn't have to memorize a list before the design starts.
 
 ## `Plain` is `explain` with no trigger
 
-The three skills above are things you invoke. `Plain` is not — it's an
+The skills above are things you invoke. `Plain` is not — it's an
 [output style](https://code.claude.com/docs/en/output-styles), which means it edits the
 system prompt and applies to every response until you turn it off.
 
@@ -132,6 +147,21 @@ in every message of a long thread.
 
 Adapted from Matt Pocock's [`wait-what`](https://github.com/mattpocock/skills) skill,
 which asks for this once. This asks for it always.
+
+## `/tldr` is the same three rules, once, at length
+
+`wait-what` repairs a message you did not *understand*. `/tldr` repairs one you did not
+want to *read*. Both take the same three rules as `Plain` — context first, Simplified
+Technical English, your project's vocabulary — and apply them to the message you just
+got, on demand.
+
+The cap is the skill: **one or two short paragraphs, no more.** No heading, no table,
+no bullet list, no code, and no repeat of the steps. It says what the message said and
+why it matters to you. The long version is still above it if you want it back, so
+nothing is lost by asking.
+
+You invoke it by typing `/tldr`. The model never reaches for it, and it shouldn't —
+only you know when an answer was longer than the thing it explained.
 
 ## `cr` learns your team, not mine
 
@@ -174,6 +204,29 @@ Re-run `/cr update` every few weeks. It syncs only comments newer than the last 
 and re-tightens the file as it grows.
 
 Requires the [`gh`](https://cli.github.com) CLI, authenticated, plus `jq`.
+
+### `/cr-post` puts them on the PR
+
+Findings in your terminal are invisible to everyone else. `/cr-post` takes the run
+above and leaves it on the PR as one review, each comment anchored to its line:
+
+`````
+src/features/orders/OrderTable.tsx:135
+  this string is in 3 places. move it to a const.
+  ```suggestion
+  await page.setDescription(DESCRIPTION)
+  ```
+`````
+
+The severity code, the category number and the emoji don't ship — they were handles
+for you, not a comment. What ships is one short sentence in ASD-STE100 Simplified
+Technical English: active voice, present tense, one idea, the fix stated. It reads
+like a colleague typing fast, because that's the only register that gets acted on.
+
+It also refuses to lie about what's on the PR. A finding on an uncommitted line, on
+pre-existing code outside a hunk, or on a line someone already commented on gets
+dropped and reported — never posted at the wrong place. Nothing goes up until you
+see the exact preview and say yes.
 
 ### Your rules stay yours
 

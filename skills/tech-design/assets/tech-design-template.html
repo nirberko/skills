@@ -2,7 +2,21 @@
      Rules: no <html>/<head>/<body> wrappers; standard HTML plus Confluence
      data-type nodes. Never invent data-user-id values - resolve real account
      ids (lookupJiraAccountId) or leave the name as plain text.
-     Never use em dashes (—) anywhere - only the regular dash (-). -->
+     Never use em dashes (—) anywhere - only the regular dash (-).
+
+     EVERY SENTENCE IS ASD-STE100 SIMPLIFIED TECHNICAL ENGLISH. One idea per
+     sentence, 25 words maximum, active voice with the actor named, present tense,
+     no -ing word used as a verb or a noun, no more than three nouns stacked, one
+     word for one meaning across every section. Code, identifiers, headings and
+     approved Technical Names are exempt. See references/ste.md.
+
+     SECTIONS ARE CHOSEN FROM THE FIXED MENU, NOT INVENTED. Delete every slot this
+     design doesn't need, but never reorder the slots and never add new ones. A
+     design with five sections that all say something beats twelve where seven say
+     "N/A". The four ⚠️ sections may be dropped, but each one leaves a single line
+     saying why. Section length follows complexity, not importance - a simple
+     mechanism gets one paragraph. Open questions is ALWAYS the last section.
+     See references/sections.md. -->
 
 <h2>📋 Overview</h2>
 <table>
@@ -25,20 +39,60 @@
 <!-- Keep only these six rows. Drop any row that is empty / N/A (e.g. no Prototype for a non-UI design). -->
 
 <h2>🎯 Requirements</h2>
-<!-- Mini-PRD, scaled to the design. Open with framing prose; <strong>bold</strong> the key
-     domain terms and define any the doc relies on. Then a numbered Scope list, then optionally
-     a high-level tech approach. Larger designs nest Background / Problem Statement /
-     Proposed Solution / Monitoring & Alerts / Potential Side Effects. -->
-<p>Short framing: what the change does and for whom, with the key <strong>domain terms</strong> bolded.</p>
+<!-- Mini-PRD, scaled to the design. Framing -> the problem -> Scope -> Goals / Non-Goals.
+     No solution words in the problem. NO PHASE HEADERS - Requirements describe what ships
+     now; phasing lives in Tasks & Phases only. A future extension gets one sentence where
+     it justifies a design choice, nowhere else. When the user narrowed the scope
+     ("only X migrates"), say so plainly and describe no work outside it.
+     Larger designs nest Background / Problem Statement / Proposed Solution /
+     Extendibility / Potential Side Effects. -->
+<p>Short framing: what the change does and for whom, with the key <strong>domain terms</strong> bolded
+   and glossed inline. No definitions list.</p>
+
+<p><strong>Today:</strong> what happens now, in ordinary words.</p>
+<p><strong>The gap:</strong> what should happen and doesn't.</p>
+<p><strong>Why it matters:</strong> who is hurt, how often, how badly, what it costs.</p>
+<p><strong>Scale:</strong> numbers, not "a lot". <strong>Evidence:</strong> incident / dashboard / ticket links.</p>
+<!-- Tag anything unverified inline: (<strong>likely</strong> - the timing matches, not reproduced). -->
+
 <p><strong>Scope:</strong></p>
 <ol>
   <li><p>Concrete capability the design must deliver.</p></li>
   <li><p>Concrete capability, with nested cases if needed.</p></li>
 </ol>
+
+<h3>Goals</h3>
+<!-- Each one a checkable outcome with a beneficiary. If no reasonable design could FAIL it,
+     it is a platitude - delete it. Group as reviewers read them. -->
+<p><strong>Functional</strong></p>
+<ul><li><p>Outcome someone can say yes or no to after it ships.</p></li></ul>
+<p><strong>Operational</strong></p>
+<ul><li><p>Latency / reliability / cost target, with a number.</p></li></ul>
+<p><strong>Commitments</strong></p>
+<ul><li><p>Any SLA or SLO being signed up to.</p></li></ul>
+
+<h3>Non-Goals</h3>
+<!-- Only things a reasonable reader would otherwise assume ARE included. Each one labelled. -->
+<ul>
+  <li><p><strong>Thing</strong> - <em>not now.</em> Comes back when: trigger.</p></li>
+  <li><p><strong>Thing</strong> - <em>not ever.</em> Because: reason.</p></li>
+  <li><p><strong>Thing</strong> - <em>someone else's.</em> Owner: who, and whether they know.</p></li>
+</ul>
+
 <p><strong>Tech approach (high level):</strong></p>
 <ul>
   <li><p>Mechanism / existing system this builds on.</p></li>
 </ul>
+
+<h2>🏛️ Current Architecture</h2>
+<!-- When something already exists that this changes. Say which parts you READ and which you
+     were TOLD. Never render a diagram of a system you inferred - use the placeholder below. -->
+<ul><li><p><strong>ComponentName</strong> - what it does, one line, with its path.</p></li></ul>
+<p><strong>Data flow:</strong> what calls what, what reads and writes where.</p>
+<p><strong>Limits today:</strong> timeouts, batch sizes, rate caps, with numbers.</p>
+<p><strong>Links:</strong> repos, runbooks, dashboards.</p>
+<div data-type="panel-info"><p><strong>[DIAGRAM NEEDED - current state]</strong><br />
+  Show: the boxes. Arrows: what flows where. Highlight: the bottleneck.</p></div>
 
 <h2>💻 Technical Overview</h2>
 <!-- Optional. A bulleted breakdown by concern for richer designs. Delete if the Design Summary covers it. -->
@@ -46,39 +100,117 @@
 <ul><li><p>Where the data lives, how it stays isolated, and the phase boundaries.</p></li></ul>
 
 <h2>🧑‍🎨 Design Summary</h2>
-<!-- The core. Split into themed subsections (emoji h3) or numbered components. Not one flat blob.
-     Per component: state Location + a Reuses list + an optional inline "Why X?" block. -->
+<!-- The core. Opens HIGH LEVEL - no schema, no query, no payload up here. Then the FIXED
+     MENU of slots, in this order: 🗄️ Data model, 🔌 API, ⚙️ Core engine behavior,
+     🛡️ Access control, ⚡ Performance, 🔍 Filtering & query surfaces, 🚚 Migration &
+     backfill. Delete slots that don't apply (Access control and Migration leave a one-line
+     reason); never reorder. Slot length follows complexity - a simple slot is one
+     paragraph. -->
 
-<h3>🗄️ Data Model</h3>
-<!-- New table: Column / Type / Null / Notes, then constraints + indexes. Say which database.
-     Reshaping an existing table? Use Removed / New / Renamed / Unchanged field tables instead. -->
+<h3>What we are going to do</h3>
+<p>Two or three paragraphs in ordinary words. What changes, what's new, what goes away.</p>
+
+<h3>The pieces</h3>
+<ul>
+  <li><p><strong>Name</strong> - one line: its job.</p></li>
+  <li><p><strong>Name</strong> - one line: its job.</p></li>
+</ul>
+<pre><code>PIECE A  (when it runs)
+  1. step
+  2. step
+      -&gt; the property that matters, e.g. makes ZERO external calls
+
+                    the handover
+                         |
+                         v
+
+PIECE B  (its own schedule)
+  1. step
+  2. step
+      -&gt; owns ALL external calls, and therefore all rate limiting
+</code></pre>
+<!-- Plus a rendered Mermaid <img> for a flow YOU designed - see conventions.md for the
+     mermaid.ink recipe and the curl 200 check. -->
+
+<h3>Why it's split this way</h3>
+<ul><li><p><strong>What stops being a problem</strong> - one line.</p></li></ul>
+
+<h3>🗄️ Data model</h3>
+<!-- One sentence of MEANING per table, then only the columns that carry a decision.
+     Say WHICH database when there is more than one. OMIT indexes, primary-key mechanics,
+     and constraint internals - they belong in the PR. A constraint gets a line only when
+     it enforces an invariant the design depends on. Reshaping an existing table? Use
+     Removed / New / Renamed / Unchanged field tables instead. -->
+<p><code>table_name</code> - one sentence: what one row means.</p>
 <table>
   <tbody>
-    <tr><th><p>Column</p></th><th><p>Type</p></th><th><p>Null</p></th><th><p>Description</p></th></tr>
-    <tr><td><p><code>id</code></p></td><td><p><code>UUID</code></p></td><td><p>NO</p></td><td><p>Primary key</p></td></tr>
+    <tr><th><p>Column</p></th><th><p>Type</p></th><th><p>Why it matters</p></th></tr>
+    <tr><td><p><code>state</code></p></td><td><p><code>enum</code></p></td><td><p>The engine reads this to decide the next step.</p></td></tr>
   </tbody>
 </table>
-<p><strong>Constraints / Indexes:</strong> ...</p>
 
-<h3>⚙️ Core logic / engine</h3>
+<h3>🔌 API</h3>
+<!-- The real mutations/queries/endpoints as SHORT CODE BLOCKS, not prose about them.
+     Schema change? Show old query vs new query with # will be deprecated / # new-field. -->
+<pre><code class="language-graphql">mutation CreateExample($input: ExampleInput!) {
+  createExample(input: $input) { id state }
+}
+</code></pre>
+
+<h3>⚙️ Core engine behavior</h3>
+<!-- ONE component per subsection. Never two. Six things; "Why this way" and "Traps" are
+     never optional - without them this is a schema dump. A big design numbers several
+     component subsections here (1., 2., ...), each with the same six. -->
+<p>One or two sentences: what it is and what job it does in the system.</p>
+<p><strong>Why it exists.</strong> What breaks without it.</p>
+<p><strong>Why this way, and not &lt;the local alternative&gt;.</strong> The choice inside this piece
+   and the reason - not the global approach, which lives in Possible Solutions.</p>
+<p><strong>What it owns.</strong> The data, decisions or calls only this piece makes, and explicitly
+   what it does not own.</p>
+<table>
+  <tbody>
+    <tr><th><p>Owner</p></th><th><p>Writes</p></th></tr>
+    <tr><td><p><strong>Piece A</strong></p></td><td><p>fields / calls</p></td></tr>
+  </tbody>
+</table>
+<p><strong>The detail.</strong></p>
 <p><strong>Location:</strong> <code>path/to/dir/</code></p>
 <p><strong>Reuses:</strong></p>
 <ul><li><p><code>ExistingUtility.method()</code> - what it gives us</p></li></ul>
-<p><strong>Why &lt;non-obvious choice&gt;?</strong> short technical justification.</p>
-
-<h3>🔌 API</h3>
-<!-- REST as POST /path/{param} + field table, or GraphQL. For a schema change, show old vs new query blocks. -->
-<pre><code class="language-graphql">query GetExample($slug: String!) {
-  example(slug: $slug) { id name }   # new-field: ...
-}
-</code></pre>
-<p><strong>Field mapping</strong> (UI column → backend source):</p>
+<p><strong>How it fails.</strong> Errors, retries, ordering constraints, what a crash halfway leaves
+   behind. If two orderings are possible, say which is correct and what the wrong one does.</p>
+<p><strong>Traps.</strong> The specific way an implementer gets this wrong. Write it as an
+   STE warning: command first, condition before the instruction, and say what happens if the
+   reader gets it wrong.</p>
+<!-- The lifecycle table - REQUIRED for any rule/automation/engine. Action -> effect,
+     kept short. This is the part readers argue about. -->
 <table>
   <tbody>
-    <tr><th><p>UI column</p></th><th><p>Backend source</p></th></tr>
-    <tr><td><p>...</p></td><td><p>...</p></td></tr>
+    <tr><th><p>Action</p></th><th><p>Effect</p></th></tr>
+    <tr><td><p>Rule created</p></td><td><p>...</p></td></tr>
+    <tr><td><p>Rule edited</p></td><td><p>What happens to work the old version produced?</p></td></tr>
+    <tr><td><p>Rule disabled</p></td><td><p>Does existing output stay, close, or freeze?</p></td></tr>
+    <tr><td><p>Rule deleted</p></td><td><p>...</p></td></tr>
+    <tr><td><p>Manual override</p></td><td><p>Does the engine respect it, revert it, or skip the item?</p></td></tr>
   </tbody>
 </table>
+
+<h3>🛡️ Access control</h3>
+<!-- ⚠️ Who can reach the new surface, and WHICH MECHANISM enforces it - not the intention.
+     One paragraph when the answer is "the existing permission model, unchanged". -->
+<p><em>Not applicable - one-line reason.</em></p>
+
+<h3>⚡ Performance</h3>
+<!-- Only when a path has a real load/latency/volume question, WITH NUMBERS. Delete otherwise. -->
+
+<h3>🔍 Filtering &amp; query surfaces</h3>
+<!-- How users or systems search, filter, sort and list the new data - the surfaces,
+     not the index strategy behind them. Delete when nothing lists this data. -->
+
+<h3>🚚 Migration &amp; backfill</h3>
+<!-- ⚠️ Skippable, but leave one line saying why. State the choice out loud:
+     backfill / default / migrate lazily / exempt. Not deciding is deciding. -->
+<p><em>Not applicable - one-line reason.</em></p>
 
 <h2>Possible Solutions</h2>
 <!-- Only when weighing real alternatives. Delete otherwise. Close with a first-person recommendation. -->
@@ -91,18 +223,57 @@
 <h4>Option 2 - name</h4>
 <p>...</p>
 <p><strong>In my opinion, Option 1 is better and recommended because</strong> reason.</p>
+<p><strong>Would reconsider if:</strong> what would change the answer.</p>
+
+<h2>🖥️ Frontend</h2>
+<!-- Only when the change has a UI. The end-to-end USER flow, numbered, screen by screen:
+     what the user sees, what they do, what each action calls, what changes on screen.
+     Include the empty / loading / error / permission-denied states. When a prototype
+     exists, follow it - and diff the doc against it before handover (review.md). -->
+<ol>
+  <li><p>The user opens ... and sees ...</p></li>
+  <li><p>They click ... which calls <code>mutationName</code>; the row shows ...</p></li>
+</ol>
+<table>
+  <tbody>
+    <tr><th><p>UI column</p></th><th><p>Backend source</p></th></tr>
+    <tr><td><p>Status</p></td><td><p><code>table.state</code></p></td></tr>
+  </tbody>
+</table>
 
 <h2>🔄 End-to-End Flow</h2>
-<!-- Numbered runtime walkthrough of one full run, ending with End state. Delete for trivial flows. -->
+<!-- Numbered runtime walkthrough of one full run, ending with End state. Then the variations -
+     these are where the design breaks. Delete for trivial flows. -->
 <ol>
   <li><p>What the user does.</p></li>
   <li><p>What each system does, in order - inline the concrete records/values produced.</p></li>
 </ol>
 <p><strong>End state:</strong> observable result.</p>
+<p><strong>Nothing changed since last time:</strong> should be: almost nothing happens.</p>
+<p><strong>The item changed:</strong> ...</p>
+<p><strong>The item went away:</strong> who closes, deletes, or cleans up.</p>
+<p><strong>A dependency is down or rejects us:</strong> ...</p>
+<p><strong>The process dies halfway:</strong> what a rerun does.</p>
+
+<h2>🚦 Rollout &amp; Rollback</h2>
+<!-- ⚠️ The flag, its default, who flips it, what happens when it's off. Rollback: what the
+     button is, how long it takes, and what becomes unrecoverable. If there is no rollback,
+     say so in bold - it changes the risk level. -->
+<p><em>Not applicable - one-line reason.</em></p>
+
+<h2>🧪 Testing Strategy</h2>
+<h2>📊 Monitoring &amp; Observability</h2>
+<!-- One line per operational goal saying which metric proves it. Only alerts someone should
+     be woken for. How you'd detect CUSTOMER impact, not just system health. -->
+
+<h2>💰 Cost</h2>
+<!-- ⚠️ Cost the failure mode (retry storm, unbounded fan-out), not just the steady state. -->
+<p><em>No cost change - one-line reason.</em></p>
 
 <h2>✅ Tasks &amp; Phases</h2>
-<!-- For multi-step work. Give deploy steps their own line, in caps, where one must land
-     before the next phase is safe. When tickets exist, use a task list linked to them. -->
+<!-- For multi-step work. First phase is the riskiest unknown, not the easiest setup. Every
+     "must handle" case from the review.md sweep appears in some Definition of Done. Give
+     deploy steps their own line, in caps, where one must land before the next phase is safe. -->
 <h3>Phase 0: name</h3>
 <p><strong>Definition of Done:</strong></p>
 <ul><li><p>observable end condition</p></li></ul>
@@ -111,9 +282,33 @@
 <p><strong>Tasks Dependencies:</strong> <code>1 → 2 → [3,4,5]</code></p>
 
 <h2>Did Not Address</h2>
-<ul><li><p>Explicitly out of scope.</p></li></ul>
+<!-- Explicit exclusions. For a case the sweep found and we're accepting, say what would
+     change the decision. For one that can't happen, say WHY it can't. -->
+<ul><li><p>Explicitly out of scope, and why.</p></li></ul>
+
+<h2>⚠️ Risks</h2>
+<!-- Top three. Not eleven - eleven is a way of not prioritising. -->
+<table>
+  <tbody>
+    <tr><th><p>Risk</p></th><th><p>Likelihood</p></th><th><p>Impact</p></th><th><p>Mitigation</p></th></tr>
+    <tr><td><p>...</p></td><td><p>Med</p></td><td><p>High</p></td><td><p>...</p></td></tr>
+  </tbody>
+</table>
+
+<h2>🔗 References</h2>
+<!-- Include what you read and REJECTED, not just what you used. -->
+<ul><li><p>Prior art, tickets, incidents, external specs.</p></li></ul>
 
 <h2>❓ Open questions</h2>
-<!-- Concrete unresolved decisions + their options/tradeoff. Tag calls owned outside engineering (product).
-     Keep resolved ones struck through with "✅ resolved (reason)". -->
-<ul><li><p>Unresolved decision + its options/tradeoff.</p></li></ul>
+<!-- ALWAYS THE LAST SECTION. A running record, not a snapshot: keep every question ever
+     raised, including across doc updates. Never delete a resolved one - strike it through
+     (<s>...</s>) and attach "✅ resolved (reason)" in place, so the review history shows
+     what was already addressed. Built up from Phase 1, not reconstructed at the end.
+     Tag calls owned outside engineering (product). -->
+<table>
+  <tbody>
+    <tr><th><p>Question</p></th><th><p>Owner</p></th><th><p>Blocks</p></th></tr>
+    <tr><td><p>The decision + its options/tradeoff.</p></td><td><p>who</p></td><td><p>which phase</p></td></tr>
+    <tr><td><p><s>A settled question.</s> ✅ resolved (the answer, one line).</p></td><td><p>who</p></td><td><p>-</p></td></tr>
+  </tbody>
+</table>
