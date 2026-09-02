@@ -31,7 +31,8 @@
     "./skills/explain",
     "./skills/learn",
     "./skills/tech-design",
-    "./skills/tldr"
+    "./skills/tldr",
+    "./skills/verify-commits"
   ],
   "outputStyles": [
     "./output-styles"
