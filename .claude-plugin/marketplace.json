@@ -9,7 +9,7 @@
     {
       "name": "nirberko-skills",
       "source": "./",
-      "description": "Skills for understanding code you didn't write (learn, explain), catching your team's review comments before they do (cr) and posting them on the PR (cr-post), writing a design doc a reviewer can follow (tech-design), and re-saying a long answer in two paragraphs (tldr), plus the Plain output style.",
+      "description": "Skills for understanding code you didn't write (learn, explain), catching your team's review comments before they do (cr) and posting them on the PR (cr-post), repairing unverified commit signatures (verify-commits), writing a design doc a reviewer can follow (tech-design), and re-saying a long answer in two paragraphs (tldr), plus the Plain output style.",
       "category": "engineering",
       "keywords": [
         "skills",
@@ -24,7 +24,10 @@
         "tldr",
         "tech-design",
         "rfc",
-        "confluence"
+        "confluence",
+        "git",
+        "commit-signing",
+        "verified-commits"
       ]
     }
   ]

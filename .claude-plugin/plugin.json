@@ -1,7 +1,7 @@
 {
   "name": "nirberko-skills",
-  "version": "0.5.0",
-  "description": "Agent skills for understanding code you didn't write, catching review comments before reviewers do and leaving them on the PR, writing a design doc a reviewer can actually follow, and cutting a long answer down to two paragraphs, plus an output style that makes every answer land.",
+  "version": "0.6.0",
+  "description": "Agent skills for understanding code you didn't write, catching review comments before reviewers do and leaving them on the PR, keeping every commit signed and verified, writing a design doc a reviewer can actually follow, and cutting a long answer down to two paragraphs, plus an output style that makes every answer land.",
   "author": {
     "name": "Nir Berko",
     "url": "https://github.com/nirberko"
@@ -23,7 +23,10 @@
     "tldr",
     "tech-design",
     "rfc",
-    "confluence"
+    "confluence",
+    "git",
+    "commit-signing",
+    "verified-commits"
   ],
   "skills": [
     "./skills/cr",
