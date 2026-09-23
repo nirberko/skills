@@ -1,6 +1,6 @@
 {
   "name": "nirberko-skills",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Agent skills for understanding code you didn't write, catching review comments before reviewers do and leaving them on the PR, opening a PR a stranger can follow, keeping every commit signed and verified, writing a design doc a reviewer can actually follow, and cutting a long answer down to two paragraphs, plus an output style that makes every answer land.",
   "author": {
     "name": "Nir Berko",

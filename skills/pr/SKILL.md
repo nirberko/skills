@@ -5,7 +5,7 @@ description: >-
   has never seen the feature can follow. Finds the Jira ticket from the branch
   name or commits, reads the diff and the ticket, and writes the title and body
   in ASD-STE100 Simplified Technical English with the ubiquitous language from
-  `AGENTS.md`: a TL;DR, the goal, what changed, the result, and before/after
+  `AGENTS.md`: the goal, what changed, the result, and before/after
   screenshots when the change is visual. Shows a preview, and opens the PR only
   after you confirm. Also rewrites the body of an existing PR. Use when the user
   says "/pr", "open a PR", "create a PR", "make a pull request", "write the PR
@@ -19,7 +19,7 @@ A PR body has one job: a reviewer who has never heard of the feature reads it
 once and knows **why** the change exists, **what** it changes, and **what is
 different after it merges**. Then they read the diff.
 
-So the body is short. It is a TL;DR, not a changelog. If the reader needs the
+So the body is short. It is a summary, not a changelog. If the reader needs the
 diff to understand the body, the body failed. If the body repeats the diff, the
 body is too long.
 
@@ -141,10 +141,6 @@ Use this layout. Delete a section only where the table below says you can.
 ```markdown
 **Jira:** [CLU-1234](https://example.atlassian.net/browse/CLU-1234)
 
-### TL;DR
-<One or two sentences. What this PR does and why. A reader who stops here
-knows enough.>
-
 ### Why
 <Two or three sentences. The problem before this change, and who has it.>
 
@@ -168,7 +164,7 @@ not do before.>
 | Section | Keep it when |
 |---|---|
 | Jira | A ticket exists. |
-| TL;DR, Why, What changed, Result | Always. |
+| Why, What changed, Result | Always. |
 | Screenshots | The change is visible (Step 4). |
 | How to test | A reviewer can check the change by hand. Omit it for a pure refactor with tests. |
 
@@ -208,9 +204,6 @@ a sign-off, or an emoji.
 
 ```markdown
 **Jira:** [CLU-1234](https://example.atlassian.net/browse/CLU-1234)
-
-### TL;DR
-The scan list gets a status filter. Users find failed scans in one click.
 
 ### Why
 The scan list shows all scans in one table. To find the failed scans, users
