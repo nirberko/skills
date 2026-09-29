@@ -8,7 +8,9 @@ description: >-
   categories and return GitHub-style inline comments: severity-tagged (🔴 blocker /
   🟡 should-fix / 🔵 nit), each anchored to file:line with the quoted code, a short
   TLDR comment, and a one-click `suggestion` fix, so issues get fixed before
-  reviewers raise them; UPDATE (args contain "update") — fetch review comments
+  reviewers raise them. RUN also always checks that every new or changed function
+  has a JSDoc/docstring that is correct and explains what the function means;
+  UPDATE (args contain "update") — fetch review comments
   newer than the last sync for the detected repo and improve that repo's ruleset
   from them. Use RUN when finishing a feature/fix, before committing or
   opening/updating a PR, or when the user says "review my changes", "am I ready to
@@ -65,7 +67,8 @@ RULESET="$HOME/.claude/cr/feedback/$REPO.md"
     hand
 
   Never review blindly with no ruleset, and never substitute generic best practices
-  for the team's actual comments.
+  for the team's actual comments. The one built-in check that runs next to the
+  ruleset is RUN step 4(c), doc comments on new and changed functions.
 
 Load `$RULESET` — its categories, severity examples, RUN sweep list, and final-gate
 checklist ARE the ruleset for everything below. References to "the categories" /
@@ -116,6 +119,8 @@ checklist is a secondary summary.
    never emit a finding anchored to an unchanged line. The one exception: the
    branch's change directly breaks pre-existing code (deleted a symbol it
    calls, changed a contract it relies on) — flag that at the *changed* line.
+   A doc comment that the change made wrong is this case too — see step 4(c)
+   for where to anchor it.
 
 2. Read every changed hunk **plus enough surrounding context to judge it**.
    Verify symbols the diff references actually exist (don't flag a method that's
@@ -180,8 +185,43 @@ checklist is a secondary summary.
      verdict. A failing answer becomes a finding at that severity, using the row's
      reviewer quote as the TLDR line. A passing answer becomes one ✓ line in the
      final gate. Rows whose surface doesn't match are skipped silently.
+   - **(c) Doc comments on new and changed functions** — a built-in check. It runs
+     on every repo, even when the ruleset never mentions docs. The target set is
+     every function, method, hook or component that this branch **adds**, and
+     every one whose **signature or behavior** the branch changes (params, return
+     value, thrown errors, side effects, what it means for callers). A change
+     that only touches formatting or an internal rename does not count. For each
+     target, read its doc comment (JSDoc/TSDoc in JS/TS, a docstring in Python,
+     whatever the repo's language uses) and every inline comment inside the
+     changed hunk, then check:
+     - **Missing** — a new exported/public function, or any non-trivial one, has
+       no doc comment → 🟡 "add jsdoc — what does this do and why". Skip only a
+       small private helper whose name already says everything
+       (`isEmpty`, `toCents`).
+     - **Stale** — the doc no longer matches the code. It names a param that was
+       renamed or removed, leaves out a new param, gives the wrong return type or
+       value, or describes the old behavior → 🟡 "jsdoc is stale — says X, code
+       does Y". Make it 🔴 when the wrong doc would make a caller misuse the
+       function (for example, it says the function returns `null` but it now
+       throws).
+     - **Hollow** — the doc only repeats the name (`/** Gets the user. */` on
+       `getUser`) and does not say what the function means: what it is for, why
+       it exists, the non-obvious rules, units, edge cases, what `null` or an
+       empty result means → 🔵 "jsdoc restates the name — explain the why".
+     - **Wrong inline comment** — a comment in a changed hunk that describes code
+       it no longer matches → 🟡 "comment no longer matches the code".
 
-   Merge anything found in (a) and (b) into the same findings list (dedupe by line).
+     Anchor a finding on the doc comment lines, not on the function body, so the
+     `suggestion` block can replace the doc. This holds even when the doc lines
+     themselves are unchanged, because the branch's change is what made them
+     wrong (the step-1 exception). The `suggestion` is the corrected doc,
+     written from what the code actually does after reading it — never a guess.
+     Match the repo's doc style (tags, `@param` format, line length). When the
+     function is the target but there is no doc to anchor on, anchor on the
+     signature line and let the `suggestion` be the doc plus that line.
+
+   Merge anything found in (a), (b) and (c) into the same findings list (dedupe by
+   line).
 
 5. **Output in this order:**
    1. **One-line tally** — `## Review — N findings (X 🔴 · Y 🟡 · Z 🔵)`.
@@ -192,7 +232,9 @@ checklist is a secondary summary.
       findings (not after the last). Use `### 🔴 Must fix (N)` if any blockers.
    3. **`### 🔵 Nits (N)`** — same grouped format, same dividers.
    4. **Final gate checklist** — the checklist from the loaded ruleset, one row
-      per category, ✓ / ~ / ✗ with one-line evidence. Secondary summary only.
+      per category, ✓ / ~ / ✗ with one-line evidence, then one more row for the
+      built-in check: `Doc comments on new/changed functions — N checked`.
+      Secondary summary only.
    5. Offer to apply the fixes (Edit them on request — the `suggestion` blocks
       are already the exact edits).
 
