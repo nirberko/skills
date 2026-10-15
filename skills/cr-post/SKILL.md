@@ -7,7 +7,9 @@ description: >-
   code, no category number, no bot markers, just the sentence a colleague would
   type — keeps the one-click ```suggestion block, drops any finding whose line is
   not in the PR diff, dedupes against comments already on the PR, shows a preview,
-  and posts the lot as ONE review after you confirm. Use when the user says
+  and posts the lot as ONE review after you confirm. If a Slack MCP is connected
+  and the PR is someone else's, it also DMs the author a one-line heads-up with
+  the comment count. Use when the user says
   "/cr-post", "post these on the PR", "put those comments on the PR", "leave the
   review on GitHub", "comment these on the diff", or after a `/cr` run asks to
   push the findings to the PR. Needs a `/cr` run first — this skill posts findings,
@@ -142,10 +144,15 @@ skipped 3:
   src/lib/format.ts:12   not committed yet
   src/lib/format.ts:44   line is not in the PR diff
   src/api/client.ts:20   a comment already says this
+
+slack DM to @dana (PR author):
+  hey, left 6 comments on #4213 (order export). 2 need a fix, the rest are nits.
 ```
 
 Ask once, plainly, whether to post. **Never post before an explicit yes.** Never
-post a comment that was not in the preview.
+post a comment that was not in the preview. The one yes covers the DM too; leave
+the `slack DM` block out when Step 6 sends nothing, and say why in one line
+(own PR, no Slack MCP, no Slack match).
 
 ## Step 5 — Post as one review
 
@@ -188,11 +195,51 @@ posted. The message names the offending field: re-check that comment's path and
 line against `gh pr diff`, drop it, and post the rest. Do not retry the same
 payload.
 
-## Step 6 — Report
+## Step 6 — Tell the author on Slack
 
-One short block: how many comments posted, the review URL, and the skipped list
-again with reasons. If findings were held back by volume or by an arg, say which
-ones, so nothing goes quiet.
+A review on GitHub is easy to miss. When the PR is someone else's, send the author
+one short DM so they know to look.
+
+**Send only when all of these hold** — otherwise skip the step:
+
+- A Slack MCP is connected (a tool such as `slack_send_message` and
+  `slack_search_users` is available). No Slack tools → skip quietly; do not
+  mention Slack anywhere.
+- The PR author is not the user. A DM to yourself is noise.
+- The review in Step 5 posted. If it failed, send nothing.
+- The author resolves to exactly one Slack user. Do this lookup **before** the
+  preview, so the preview names the recipient:
+  1. Get the author's name and public email: `gh api users/<login> -q '.name, .email'`.
+  2. Search Slack users by email first, then by name. Accept a single, clear
+     match only. Zero or several matches → skip the DM and say so; never guess.
+
+**The message** — one line, the count and the split, nothing else:
+
+```
+hey, left 6 comments on <PR_URL|#4213> (order export). 2 need a fix, the rest are nits.
+```
+
+- `<PR_URL|#4213>` is a Slack link to the PR. The text in parentheses is the PR
+  title cut to two or three words, lowercase.
+- "need a fix" counts the 🔴/🟡 comments that posted; "nits" counts the 🔵 ones.
+  Count only what posted, never what was skipped.
+- Adapt the second sentence to the split:
+  - only nits → `all small stuff, nits only.`
+  - no nits → `2 of them need a fix.` (or `all of them need a fix.`)
+  - one comment → `hey, left a comment on <PR_URL|#4213> (order export).` and
+    add `it needs a fix.` or `just a nit.`
+- Same register as the comments: lowercase, no greeting beyond `hey`, no emoji,
+  no sign-off, no mention of a tool or a ruleset.
+
+Send it as a DM to the author (`channel_id` = their Slack user ID). If the send
+fails, say so in the report; the review is already up, so do not retry in a loop.
+
+## Step 7 — Report
+
+One short block: how many comments posted, the review URL, the skipped list again
+with reasons, and whether the Slack DM went out (and to whom) or why it did not.
+If findings were held back by volume or by an arg, say which ones, so nothing
+goes quiet.
 
 Then stop. Applying the fixes is `/cr`'s job, not this skill's — never edit code
 here.
@@ -206,7 +253,8 @@ here.
 | `nits` | Nits only. |
 | `S1 N2 …` | Only those findings, by their `/cr` code. The codes select; they are never posted. |
 | `4213`, PR URL | Target that PR instead of the current branch's. |
-| `dry-run` | Build the payload and preview it. Post nothing. |
+| `dry-run` | Build the payload and preview it. Post nothing, send nothing. |
+| `no-slack` | Post the review, but send no Slack DM. |
 
 ## Privacy
 
