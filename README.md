@@ -1,6 +1,6 @@
 # skills
 
-Seven agent skills for the things that eat the most time on an unfamiliar codebase:
+Eight agent skills for the things that eat the most time on an unfamiliar codebase:
 understanding code you didn't write, getting a design approved, and getting through
 review. Plus an output style, for when the problem isn't the code — it's that the
 answer didn't land.
@@ -20,6 +20,9 @@ answer didn't land.
 - **`/pr`** — opens the PR with a short body a stranger to the feature can follow:
   the Jira ticket, why, what changed, the result, and screenshots when it's
   visual, in Simplified Technical English and your `AGENTS.md` vocabulary.
+- **`/pr-why`** — someone else's PR, explained: the Jira ticket, the PR body, the
+  review threads and the code, tied together so every change has its reason and
+  its source. Comes back as a Claude artifact you can open and share.
 - **`/tldr`** — the last answer was too long. Type it, and the same answer comes back
   in one or two short paragraphs, with the context you were missing.
 - **Plain** *(output style)* — every answer, every turn: context first, then
@@ -74,6 +77,7 @@ cp -R skills/output-styles/* ~/.claude/output-styles/
 | `explain` | you or the model | One-shot explainer. Classifies the input (PR URL, pasted review comment, code block, error, feature name, ticket), reads the actual code, and answers with a moving-parts table, an execution-order flow, and cited line numbers. Nothing is assumed obvious. |
 | `tech-design` | you or the model | Writes a technical design in eight checkpointed phases instead of one turn: reads the code first, rates every term in the request known/assumed/unknown, states the gap before proposing anything, tests each goal against its non-goal, and gets an approach agreed *in ordinary words* before a single table or endpoint is named. Then names the new pieces, walks one item through the whole system — including the quiet run, the deletion, and the crash halfway — and gives each piece a section covering why-this-way, what-it-owns, how-it-fails and the traps. Every sentence of the document is ASD-STE100 Simplified Technical English, with the glossary pass doubling as its approved Technical Names list. Output is Confluence HTML+ (native @mention chips, status pills, panels) or plain markdown, with Mermaid flows rendered as images and every URL verified 200 before publishing. |
 | `pr` | you or the model | Opens a PR for the current branch. Takes the Jira key from the args, branch name or commits and reads the ticket for the *why*, reads the full diff, loads the terms from `AGENTS.md`, and writes a one-screen body: Why, What changed, Result, Screenshots (only for visible changes — before/after, dragged in by you because `gh` can't upload images), How to test. Every sentence in Simplified Technical English. Honors the repo's own PR template and title format. Previews, then opens (draft or ready) only after you say yes; `update` rewrites an open PR's body instead. |
+| `pr-why` | you or the model | Explains why a PR exists and why each change was made. Reads the PR body, commits, diff and inline review threads, the linked Jira ticket (acceptance criteria, comments, parent epic, linked issues), and every changed file in full at the head commit. Groups the changes by purpose and gives each one a reason tagged with its source: `ticket`, `pr-body`, `review`, `commit`, or `inferred` from the code. Checks each ticket requirement against the code (done, partial, not in this PR, extra), and lists what it could not explain as open questions instead of guessing. Publishes the result as a Claude artifact: before/after table, themes with links to the exact lines, review decisions, glossary. |
 | `tldr` | you | Re-says the message you just read in one or two short paragraphs — what it said and why it matters to you, in Simplified Technical English and your project's own vocabulary. No headings, no bullets, no code, no repeated steps. The long version stays above it. |
 | `cr` | you | Reviews the current branch — committed *and* uncommitted — against your repo's ruleset, and returns GitHub-style inline comments: severity code, `file:line`, the offending lines, a blunt one-line TLDR, and a one-click ` ```suggestion ` fix. On every repo it also checks the JSDoc/docstring of each new or changed function: missing, stale after the change, or only repeating the function's name. |
 | `cr-post` | you or the model | Posts a `/cr` run on the PR. Resolves the PR, drops findings whose line isn't in the diff (uncommitted work, pre-existing code) and ones already commented on, rewrites each TLDR as a short Simplified Technical English comment with no severity code and no bot markers, keeps the ` ```suggestion ` block, shows a preview, and posts the lot as one `COMMENT` review once you say yes. With a Slack MCP connected and someone else's PR, it also DMs the author the comment count. |
@@ -82,7 +86,8 @@ Trigger phrases: `/learn`, "teach me X", "walk me through X" · `/explain`, "wha
 this do", "I don't understand this PR comment" · `/tech-design`, "write a design doc
 for X", "draft a TDR" · `/cr`, "review my changes", "am I ready to push" ·
 `/cr-post`, "post these on the PR", "leave the review on GitHub" · `/pr`, "open a
-PR", "write the PR description" · `/tldr` (you only —
+PR", "write the PR description" · `/pr-why`, "why was this PR made", "help me
+understand PR 1234" · `/tldr` (you only —
 the model never reaches for it, because only you know when an answer was too long).
 
 `tech-design` and the **Plain** output style share one register: ASD-STE100 Simplified

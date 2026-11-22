@@ -1,0 +1,251 @@
+<title>PR {{NUMBER}} {{SHORT_NAME}}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  pr-why template. Fill every {{…}}. Repeat blocks marked REPEAT.
+  Delete sections marked OPTIONAL when empty. Delete every comment before publishing.
+  SHORT_NAME: 2-4 words naming the change, e.g. "Found-in stages".
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column; header dossier, then problem → changes → coverage → open points. */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --fg: #17202b;
+  --muted: #5a6677;
+  --line: #dbe1e8;
+  --accent: #2c56c9;
+  --accent-soft: #e7edfb;
+  --add-bg: #e5f4ea; --add-fg: #17652f;
+  --del-bg: #fbe8e8; --del-fg: #a12020;
+  --warn-bg: #fdf1dc; --warn-fg: #8a4f00;
+  --src-ticket: #6a44b8; --src-body: #2c56c9; --src-commit: #0e6e66; --src-review: #8a4f00; --src-inferred: #5a6677;
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161d; --surface: #182029; --fg: #e3e8ef; --muted: #96a2b2; --line: #2a3542;
+  --accent: #86a6ff; --accent-soft: #1f2b47;
+  --add-bg: #12301d; --add-fg: #8fdba5; --del-bg: #3a1717; --del-fg: #f2a3a3;
+  --warn-bg: #3a2a10; --warn-fg: #f0c27a;
+  --src-ticket: #b79cf0; --src-body: #86a6ff; --src-commit: #6fd3c8; --src-review: #f0c27a; --src-inferred: #96a2b2;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #11161d; --surface: #182029; --fg: #e3e8ef; --muted: #96a2b2; --line: #2a3542;
+  --accent: #86a6ff; --accent-soft: #1f2b47;
+  --add-bg: #12301d; --add-fg: #8fdba5; --del-bg: #3a1717; --del-fg: #f2a3a3;
+  --warn-bg: #3a2a10; --warn-fg: #f0c27a;
+  --src-ticket: #b79cf0; --src-body: #86a6ff; --src-commit: #6fd3c8; --src-review: #f0c27a; --src-inferred: #96a2b2;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--font-body); }
+.page {
+  max-width: 880px; margin: 0 auto;
+  padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 40px;
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+code { background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.25; margin: 0; }
+h1 { font-size: 1.85rem; font-weight: 600; }
+h2 { font-size: 1.3rem; font-weight: 600; }
+h3 { font-size: 1.05rem; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+section { display: grid; gap: 14px; min-width: 0; }
+.eyebrow { font: 500 0.72rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+/* Header */
+header { display: grid; gap: 14px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--muted); font-size: 0.88rem; }
+.meta a { color: inherit; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font: 500 0.75rem/1.6 var(--font-mono); border: 1px solid var(--line); background: var(--surface); color: var(--fg); white-space: nowrap; }
+.pill.merged, .pill.done { background: var(--add-bg); color: var(--add-fg); border-color: transparent; }
+.pill.open, .pill.partial { background: var(--warn-bg); color: var(--warn-fg); border-color: transparent; }
+.pill.closed, .pill.missing { background: var(--del-bg); color: var(--del-fg); border-color: transparent; }
+.pill.extra { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.notice { padding: 10px 14px; border-radius: var(--radius); background: var(--warn-bg); color: var(--warn-fg); font-size: 0.9rem; }
+
+.tldr { font-size: 1.08rem; line-height: 1.65; padding: 18px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+
+/* Problem */
+.problem { display: grid; gap: 10px; }
+.quote { border-left: 3px solid var(--src-ticket); padding: 4px 0 4px 14px; color: var(--muted); font-size: 0.93rem; }
+ul.plain { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { font: 500 0.72rem/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td.before { color: var(--del-fg); }
+td.after { color: var(--add-fg); }
+
+/* Themes */
+.themes { display: grid; gap: 16px; }
+.theme { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 12px; min-width: 0; }
+.theme-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+.theme-head .idx { font: 500 0.8rem/1 var(--font-mono); color: var(--muted); }
+.why { display: grid; gap: 8px; }
+.why-row { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: baseline; }
+.src { font: 500 0.7rem/1.6 var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; padding: 0 7px; border-radius: 4px; border: 1px solid currentColor; white-space: nowrap; }
+.src.ticket { color: var(--src-ticket); }
+.src.pr-body { color: var(--src-body); }
+.src.commit { color: var(--src-commit); }
+.src.review { color: var(--src-review); }
+.src.inferred { color: var(--src-inferred); border-style: dashed; }
+.files { display: flex; flex-wrap: wrap; gap: 6px; }
+.files a { font: 0.78rem/1.6 var(--font-mono); padding: 1px 8px; border-radius: 4px; background: var(--accent-soft); text-decoration: none; overflow-wrap: anywhere; }
+pre.diff { margin: 0; overflow-x: auto; font: 0.8rem/1.55 var(--font-mono); background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 0; }
+pre.diff span, pre.diff ins, pre.diff del { display: block; padding: 0 14px; text-decoration: none; white-space: pre; }
+pre.diff ins { background: var(--add-bg); color: var(--add-fg); }
+pre.diff del { background: var(--del-bg); color: var(--del-fg); }
+pre.diff ins::before { content: "+ "; }
+pre.diff del::before { content: "- "; }
+pre.diff span::before { content: "  "; }
+
+/* Review decisions + open questions */
+.list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.list li { padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); display: grid; gap: 4px; }
+.list .who { font-size: 0.82rem; color: var(--muted); }
+.questions li { border-left: 3px solid var(--warn-fg); }
+
+dl.glossary { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
+dl.glossary dt { font-weight: 600; }
+dl.glossary dd { margin: 0; color: var(--muted); }
+@media (max-width: 560px) { dl.glossary { grid-template-columns: 1fr; } dl.glossary dd { margin-bottom: 8px; } }
+
+footer { color: var(--muted); font-size: 0.82rem; display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 16px; }
+@media (prefers-reduced-motion: no-preference) { a { transition: color .15s; } }
+</style>
+
+<main class="page">
+
+  <header>
+    <span class="eyebrow">{{OWNER}}/{{REPO}} · pull request #{{NUMBER}}</span>
+    <h1>{{PR_TITLE}}</h1>
+    <div class="meta">
+      <!-- state class: merged | open | closed -->
+      <span class="pill {{STATE_CLASS}}">{{STATE_LABEL}}</span>
+      <span>{{AUTHOR}}</span>
+      <span class="mono">{{HEAD_BRANCH}} → {{BASE_BRANCH}}</span>
+      <span class="mono">+{{ADDITIONS}} −{{DELETIONS}} · {{FILE_COUNT}} files</span>
+      <a href="{{PR_URL}}">Open the PR</a>
+      <!-- OPTIONAL: delete when there is no ticket -->
+      <a href="{{TICKET_URL}}">{{TICKET_KEY}} · {{TICKET_STATUS}}</a>
+    </div>
+    <!-- OPTIONAL: only when the ticket could not be found or read -->
+    <p class="notice">{{NO_TICKET_NOTICE}}</p>
+  </header>
+
+  <section>
+    <span class="eyebrow">TL;DR</span>
+    <p class="tldr">{{TLDR_MAX_3_SENTENCES}}</p>
+  </section>
+
+  <section class="problem">
+    <span class="eyebrow">The problem</span>
+    <h2>{{PROBLEM_HEADLINE}}</h2>
+    <p>{{PROBLEM_PLAIN_WORDS}}</p>
+    <!-- OPTIONAL: one short quote from the ticket or PR body that states the problem -->
+    <p class="quote">{{SOURCE_QUOTE}} <span class="src {{QUOTE_SRC}}">{{QUOTE_SRC}}</span></p>
+    <!-- OPTIONAL: parent epic and related tickets -->
+    <ul class="plain">
+      <li>{{CONTEXT_ITEM}}</li>
+    </ul>
+  </section>
+
+  <section>
+    <span class="eyebrow">Before and after</span>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Situation</th><th>Before</th><th>After</th></tr></thead>
+        <tbody>
+          <!-- REPEAT: max 6 rows; describe what a user or caller sees -->
+          <tr><td>{{SITUATION}}</td><td class="before">{{BEFORE}}</td><td class="after">{{AFTER}}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">What changed and why</span>
+    <div class="themes">
+      <!-- REPEAT: one article per theme, max 6 -->
+      <article class="theme">
+        <div class="theme-head">
+          <span class="idx">{{THEME_INDEX}}</span>
+          <h3>{{THEME_TITLE}}</h3>
+        </div>
+        <p>{{WHAT_CHANGED}}</p>
+        <div class="why">
+          <!-- REPEAT: one row per reason. src class: ticket | pr-body | commit | review | inferred -->
+          <div class="why-row"><span class="src {{SRC}}">{{SRC}}</span><p>{{REASON}}</p></div>
+        </div>
+        <!-- OPTIONAL: max 3 snippets on the whole page, max 12 lines each; escape HTML -->
+        <pre class="diff"><span>{{CONTEXT_LINE}}</span><del>{{REMOVED_LINE}}</del><ins>{{ADDED_LINE}}</ins></pre>
+        <div class="files">
+          <!-- REPEAT: link to the line at the head commit -->
+          <a href="https://github.com/{{OWNER}}/{{REPO}}/blob/{{HEAD_SHA}}/{{PATH}}#L{{LINE}}">{{PATH}}:{{LINE}}</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- OPTIONAL: delete when there is no ticket -->
+  <section>
+    <span class="eyebrow">Ticket against code</span>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ask</th><th>Status</th><th>Where</th></tr></thead>
+        <tbody>
+          <!-- REPEAT: status class + label: done | partial | missing ("not in this PR") | extra -->
+          <tr><td>{{ASK}}</td><td><span class="pill {{COVER_CLASS}}">{{COVER_LABEL}}</span></td><td>{{WHERE_LINK_OR_NOTE}}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- OPTIONAL: decisions taken in review -->
+  <section>
+    <span class="eyebrow">Decided in review</span>
+    <ul class="list">
+      <!-- REPEAT -->
+      <li><span class="who">{{REVIEWER}} on <a href="{{THREAD_URL}}">{{PATH}}</a> · {{RESOLVED_OR_OPEN}}</span><p>{{ASKED}} → {{WHAT_AUTHOR_DID}}</p></li>
+    </ul>
+  </section>
+
+  <!-- OPTIONAL: changes with no reason found, divergence from a sibling, risks -->
+  <section>
+    <span class="eyebrow">Open questions</span>
+    <ul class="list questions">
+      <!-- REPEAT -->
+      <li><p>{{QUESTION}}</p><span class="who">{{WHY_IT_MATTERS_AND_WHERE}}</span></li>
+    </ul>
+  </section>
+
+  <!-- OPTIONAL: only terms the page uses -->
+  <section>
+    <span class="eyebrow">Words used here</span>
+    <dl class="glossary">
+      <!-- REPEAT -->
+      <dt>{{TERM}}</dt><dd>{{DEFINITION}}</dd>
+    </dl>
+  </section>
+
+  <footer>
+    <span>Sources: PR body, {{COMMIT_COUNT}} commits, {{REVIEW_COMMENT_COUNT}} review comments{{TICKET_SOURCE_SUFFIX}}. Read at <span class="mono">{{HEAD_SHA_SHORT}}</span> on {{DATE}}.</span>
+    <!-- OPTIONAL -->
+    <span>{{NOISE_COUNT}} generated or lock files skipped.</span>
+  </footer>
+
+</main>
