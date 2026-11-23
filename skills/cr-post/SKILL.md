@@ -65,8 +65,21 @@ The last check keeps a second run from posting everything twice:
 gh api "repos/{owner}/{repo}/pulls/<PR>/comments" --paginate -q '.[] | "\(.path):\(.line // .original_line)\t\(.user.login)\t\(.body)"'
 ```
 
-**Report every dropped finding with its reason.** A silent drop reads as "posted",
-and the user stops looking at it.
+**Then drop what is not worth a comment.** The user wants the PR review to be
+about bugs, reuse and logic, not polish. Hold these back by default (the `all`
+arg brings them in):
+
+- Any 🔵 finding in a test file (`*.test.*`, `*.spec.*`, `test_*.py`,
+  `*_test.*`, `__tests__/`, `tests/`, `test/`, `e2e/`, `fixtures/`, `mocks/`). In
+  a test file, post only what is a must: a test that cannot fail, asserts the
+  wrong thing, or will be flaky.
+- Any finding that only asks to add, shorten or reword a code comment or doc. A
+  doc that the change made *wrong* (tag `doc`, 🟡/🔴) still posts.
+- Pure clean-code nits (naming, formatting, "could be shorter") when the review
+  already has 🔴/🟡 comments. One review full of nits buries the real ones.
+
+**Report every dropped or held-back finding with its reason.** A silent drop
+reads as "posted", and the user stops looking at it.
 
 ## Step 3 — Rewrite each finding as a human comment
 
@@ -114,12 +127,15 @@ Simplified Technical English, in the register of a colleague who types fast.
 
 | Finding | Posted comment |
 |---|---|
-| duplicated literal | `this string is in 3 places. move it to a const.` |
-| magic number | `why 286? give it a name.` |
-| missing test | `add a unit test for the empty-batch path.` |
+| bug on an edge input | `if rows is empty, this divides by 0.` |
+| existing util not used | `we have formatCurrency in utils/money.ts. use it.` |
+| copied component | `this is the same as StatusChip in components/common. use that one.` |
+| logic in two places | `this filter is also in useOrders. move it to one shared helper.` |
+| race | `this runs before the fetch resolves, so data is still undefined.` |
 | unguarded access | `if the user is null, this throws. add a guard.` |
-| leftover log | `remove the log before merge.` |
-| suppressed type error | `nit: fix the type, not the ignore.` |
+| feature gap | `the ticket says archived orders stay hidden. this shows them.` |
+| missing test, risky logic | `add a test for the empty-batch path.` |
+| magic number (nit) | `nit: why 286? give it a name.` |
 
 Not this: `Consider extracting this into a reusable helper for better
 maintainability.` · `🟡 should-fix · #1 DRY: the value is being reused.` ·
@@ -127,7 +143,9 @@ maintainability.` · `🟡 should-fix · #1 DRY: the value is being reused.` ·
 
 **Volume is part of looking human.** More than about 12 inline comments on one PR
 reads like a bot. Over that, post the 🔴/🟡 findings only, and say in one line
-how many nits you held back.
+how many nits you held back. If the 🔴/🟡 findings alone are over the limit,
+keep them in this order — bugs and feature gaps, then reuse, then logic, then
+tests — and list the rest in the report.
 
 ## Step 4 — Preview, then confirm
 
@@ -249,7 +267,7 @@ here.
 | Arg | Effect |
 |---|---|
 | *(none)* | Post the 🔴/🟡 findings from the last `/cr` run. Ask about the nits. |
-| `all` | Include the nits. |
+| `all` | Include the nits, and the findings Step 2 holds back by default (test-file nits, comment/doc asks). |
 | `nits` | Nits only. |
 | `S1 N2 …` | Only those findings, by their `/cr` code. The codes select; they are never posted. |
 | `4213`, PR URL | Target that PR instead of the current branch's. |

@@ -4,12 +4,14 @@ description: >-
   Self-review gate for the current branch before a PR, driven by your own team's
   recurring review comments. The repo is auto-detected from the git remote and its
   ruleset is loaded from `~/.claude/cr/feedback/<repo>.md`. Two modes: RUN
-  (default) — review the current diff against that repo's recurring comment
-  categories and return GitHub-style inline comments: severity-tagged (🔴 blocker /
-  🟡 should-fix / 🔵 nit), each anchored to file:line with the quoted code, a short
-  TLDR comment, and a one-click `suggestion` fix, so issues get fixed before
-  reviewers raise them. RUN also always checks that every new or changed function
-  has a JSDoc/docstring that is correct and explains what the function means;
+  (default) — first learns the feature (PR body, Jira ticket, earlier PRs of the
+  same task, since one PR is often a small slice of a larger task), then reviews
+  the current diff for what matters most: bugs and broken logic, reuse of
+  existing components/utils/hooks instead of new copies, and the repo's recurring
+  comment categories. Returns GitHub-style inline comments: severity-tagged
+  (🔴 blocker / 🟡 should-fix / 🔵 nit), each anchored to file:line with the quoted
+  code, a short TLDR comment, and a one-click `suggestion` fix. It stays quiet on
+  clean-code polish, code comments and test-file style unless a fix is a must.
   UPDATE (args contain "update") — fetch review comments
   newer than the last sync for the detected repo and improve that repo's ruleset
   from them. Use RUN when finishing a feature/fix, before committing or
@@ -47,6 +49,44 @@ The split matters: a binary trigger buried in dense prose gets read but not
 *applied*. Mechanical checks are the part RUN runs deterministically; the categories
 are the part it judges.
 
+## Review priorities (these win over the ruleset)
+
+The user's order of what matters, highest first. Spend the review's effort in this
+order, and when the ruleset's severity for an item disagrees, these rules win:
+
+1. **It works.** No bugs, no regressions, no broken callers, and the change
+   actually does what the feature needs. This is the main job of the review.
+2. **Reuse.** New code uses the components, utils, hooks, types and consts that
+   already exist (in the repo, or added by earlier PRs of the same task) instead
+   of making a second copy. New logic that two places need lives in one shared
+   place.
+3. **Good logic.** The approach is sound: right layer, no fragile assumption, edge
+   cases (null, empty, loading, error, concurrency) handled, contracts kept.
+4. **Tests.** Wanted, but second-tier. A missing test is 🟡 only when the logic is
+   risky and nothing covers it; otherwise 🔵.
+5. **Clean code.** Lowest. Naming, formatting, small refactors, "could be
+   shorter", file layout → 🔵 at most, and only a few. Do not demote a real
+   duplication (that is reuse, #2) to clean code.
+
+What to **leave out** of the review entirely unless a fix is a must:
+
+- **Code comments and docs.** Never ask to add a comment, JSDoc or docstring,
+  never flag a "hollow" or terse doc. Flag a doc or comment only when the change
+  made it *wrong* in a way that would make the next reader or caller misuse the
+  code (step 5(c)).
+- **Clean-code findings in test files.** Test files are `*.test.*`, `*.spec.*`,
+  `test_*.py`, `*_test.*`, and anything under `__tests__/`, `tests/`, `test/`,
+  `e2e/`, `fixtures/`, `mocks/`. In a test file, report only what is a must:
+  a test that cannot fail, asserts the wrong thing, tests the mock instead of the
+  code, will be flaky (real timers, order dependence, shared state), or breaks
+  the suite. Skip duplication, magic values, naming, structure and style there —
+  even when a ruleset row matches.
+- **Ruleset rows about pure style or comments.** When such a row fails, demote it
+  to 🔵 (or skip it in a test file), whatever severity the ruleset gives it.
+
+Keep the nit count small — about five at most. If there are more, keep the ones
+nearest to reuse or logic and drop the rest without listing them.
+
 ## Step 0 — Detect the repo and load its ruleset (both modes, do this first)
 
 Resolve the repo name from the git remote, then the ruleset path:
@@ -67,8 +107,8 @@ RULESET="$HOME/.claude/cr/feedback/$REPO.md"
     hand
 
   Never review blindly with no ruleset, and never substitute generic best practices
-  for the team's actual comments. The one built-in check that runs next to the
-  ruleset is RUN step 4(c), doc comments on new and changed functions.
+  for the team's actual comments. The built-in checks that run next to the ruleset
+  are RUN step 5(c)–(e): misleading docs, correctness, and reuse.
 
 Load `$RULESET` — its categories, severity examples, RUN sweep list, and final-gate
 checklist ARE the ruleset for everything below. References to "the categories" /
@@ -119,26 +159,60 @@ checklist is a secondary summary.
    never emit a finding anchored to an unchanged line. The one exception: the
    branch's change directly breaks pre-existing code (deleted a symbol it
    calls, changed a contract it relies on) — flag that at the *changed* line.
-   A doc comment that the change made wrong is this case too — see step 4(c)
+   A doc comment that the change made wrong is this case too — see step 5(c)
    for where to anchor it.
 
-2. Read every changed hunk **plus enough surrounding context to judge it**.
+2. **Understand the feature before you judge the code.** A PR is often one small
+   step of a larger task. Reviewed alone, a step looks incomplete or odd; reviewed
+   with the task in mind, the real gaps show. Gather, cheaply:
+
+   ```bash
+   gh pr view --json number,title,body,url 2>/dev/null          # this PR's intent
+   git log --format='%s%n%b' "$MB"..HEAD                         # commit messages
+   KEY=$(git branch --show-current | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1)
+   # earlier and parallel PRs of the same task (ticket key in title/branch/body)
+   gh pr list --state all --search "$KEY" --limit 20 \
+     --json number,title,state,headRefName,mergedAt
+   ```
+
+   - If a ticket key exists and an Atlassian/Jira tool is connected, read the
+     ticket (and its parent epic if it has one) for the goal and acceptance
+     criteria. No key, or no tool → use the PR body and commits.
+   - For each related PR, read its title and body, and skim `gh pr diff <n>
+     --name-only` plus the parts that touch the same area. You want: what earlier
+     PRs already built (helpers, components, types this PR should reuse), and what
+     is planned for later (stated in a PR body, ticket, or `TODO(KEY)`).
+   - Cap it: about five related PRs, newest first. This is context, not a second
+     review — never emit a finding on another PR's code.
+
+   Write down, for yourself, one or two sentences: what the feature is, and what
+   this PR's slice of it is. Use that to judge:
+   - **Does the diff do what this slice should?** A gap against the ticket or PR
+     body is a finding (🔴 when the feature is broken without it).
+   - **Don't flag as missing** what an earlier PR already did or a later PR is
+     stated to do. But do flag code in this PR that would make the planned next
+     step hard or wrong.
+   - **Reuse across PRs**: a helper an earlier PR added, which this PR copies
+     instead of using, is a reuse finding.
+
+3. Read every changed hunk **plus enough surrounding context to judge it**.
    Verify symbols the diff references actually exist (don't flag a method that's
    really there; don't pass code that calls one you deleted). Evidence first —
    never review from the diff stat alone.
 
-3. Walk every hunk against the categories in the loaded ruleset. Emit each issue
-   as a **GitHub inline comment** — render it exactly like a comment sitting on
-   the line in the PR diff, in this shape:
+4. Walk every hunk against the categories in the loaded ruleset, filtered through
+   the review priorities above. Emit each issue as a **GitHub inline comment** —
+   render it exactly like a comment sitting on the line in the PR diff, in this
+   shape:
 
    ````
    **`S1`** · **`src/features/orders/OrderTable.tsx:135`** · #1 DRY
    ```ts
-   135  await page.setDescription('Testing Description')
+   135  const total = rows.reduce((s, r) => s + r.price * r.qty, 0)
    ```
-   move to const as you are reusing it
+   we have sumLineItems in utils/orders.ts, use it
    ```suggestion
-   await page.setDescription(DESCRIPTION)
+   const total = sumLineItems(rows)
    ```
    ````
 
@@ -151,8 +225,10 @@ checklist is a secondary summary.
      - `N1, N2, …` for 🔵 **nit** findings
 
      Number sequentially *within each severity*, in output (file→line) order.
-     (The severity emoji itself lives on the group header, step 5 — the letter
-     prefix carries it per finding, so don't repeat the emoji.)
+     (The severity emoji itself lives on the group header, step 6 — the letter
+     prefix carries it per finding, so don't repeat the emoji.) For a built-in
+     check, use its tag instead of a ruleset number: `bug`, `logic`, `reuse`,
+     `feature`, `doc`.
    - **code fence** — directly under the anchor, a plain ```` ```ts ```` (or
      matching lang) fence with the *exact* offending line(s) from the diff.
      **Prefix every line with its real file line number** (from the `cat -n`
@@ -162,80 +238,98 @@ checklist is a secondary summary.
      `:line` in the anchor match the first number.
    - **TLDR comment** — ONE line *under the code block* (it reads like a comment
      sitting on the code), max ~10 words, in your reviewers' actual voice:
-     lowercase, blunt, no preamble. The shape to match: "move to const as you are
-     reusing it", "add a unit test for this", "fix ts", "why 286?", "console log
-     police 🚓". NOT "Consider extracting this into a reusable helper for better
-     maintainability." When the loaded ruleset carries a verbatim reviewer quote
-     for the rule, use that quote as the TLDR — it's already in the right voice.
+     lowercase, blunt, no preamble. The shape to match: "we have X in utils, use
+     it", "if rows is empty this divides by 0", "this runs before the fetch
+     resolves", "why 286?". NOT "Consider extracting this into a reusable helper
+     for better maintainability." When the loaded ruleset carries a verbatim
+     reviewer quote for the rule, use that quote as the TLDR — it's already in
+     the right voice.
    - **`suggestion` block** — a ```` ```suggestion ```` fence with the exact
      replacement lines (GitHub's native suggested-change format, one-click
      apply). Omit ONLY when the fix isn't a localized line edit (e.g. "add a
-     test", "split this file") — then the TLDR line already carries the action.
+     test", "move this to a shared hook") — then the TLDR line already carries
+     the action.
 
    No "problem:" / "fix:" labels — the structure carries them. Don't pad.
 
-4. As part of THIS review (do NOT invoke `/code-review` or any other review skill
+5. As part of THIS review (do NOT invoke `/code-review` or any other review skill
    — /cr is standalone):
    - **(a) RUN sweep list** from the loaded ruleset (magic values, duplicated
-     blocks, missing guards, and the repo-specific items it names).
+     blocks, missing guards, and the repo-specific items it names). In test
+     files, keep only the must-fix items (see the review priorities).
    - **(b) Mechanical checks** — go through the `## Mechanical checks` table in the
      ruleset and, for **every row whose surface matches a changed file or
      construct** in the review set, answer its binary question against the actual
-     code. This is not optional or best-effort: a matched row gets an explicit
-     verdict. A failing answer becomes a finding at that severity, using the row's
-     reviewer quote as the TLDR line. A passing answer becomes one ✓ line in the
-     final gate. Rows whose surface doesn't match are skipped silently.
-   - **(c) Doc comments on new and changed functions** — a built-in check. It runs
-     on every repo, even when the ruleset never mentions docs. The target set is
-     every function, method, hook or component that this branch **adds**, and
-     every one whose **signature or behavior** the branch changes (params, return
-     value, thrown errors, side effects, what it means for callers). A change
-     that only touches formatting or an internal rename does not count. For each
-     target, read its doc comment (JSDoc/TSDoc in JS/TS, a docstring in Python,
-     whatever the repo's language uses) and every inline comment inside the
-     changed hunk, then check:
-     - **Missing** — a new exported/public function, or any non-trivial one, has
-       no doc comment → 🟡 "add jsdoc — what does this do and why". Skip only a
-       small private helper whose name already says everything
-       (`isEmpty`, `toCents`).
-     - **Stale** — the doc no longer matches the code. It names a param that was
-       renamed or removed, leaves out a new param, gives the wrong return type or
-       value, or describes the old behavior → 🟡 "jsdoc is stale — says X, code
-       does Y". Make it 🔴 when the wrong doc would make a caller misuse the
-       function (for example, it says the function returns `null` but it now
-       throws).
-     - **Hollow** — the doc only repeats the name (`/** Gets the user. */` on
-       `getUser`) and does not say what the function means: what it is for, why
-       it exists, the non-obvious rules, units, edge cases, what `null` or an
-       empty result means → 🔵 "jsdoc restates the name — explain the why".
-     - **Wrong inline comment** — a comment in a changed hunk that describes code
-       it no longer matches → 🟡 "comment no longer matches the code".
+     code. A matched row gets an explicit verdict. A failing answer becomes a
+     finding, using the row's reviewer quote as the TLDR line, at the row's
+     severity — unless the review priorities demote it (style/comment rows → 🔵;
+     non-must rows in test files → skip). A passing answer becomes one ✓ line in
+     the final gate. Rows whose surface doesn't match are skipped silently.
+   - **(c) Misleading docs only** — a built-in check, narrow on purpose. Do not
+     look for missing, short or "hollow" docs, and never ask to add a comment.
+     Flag only a doc comment or inline comment in or next to the change that the
+     change made **wrong**, where the wrong text would make a caller or the next
+     reader misuse the code: it says the function returns `null` but it now
+     throws, names a param that no longer exists, states a unit or rule the code
+     no longer follows → 🟡 "jsdoc says X, code now does Y" (🔴 when it would
+     lead a caller into a bug). Anchor on the doc lines, so the `suggestion` can
+     replace them — even when those lines are unchanged, because the branch's
+     change made them wrong (the step-1 exception). Write the corrected doc from
+     what the code actually does, in the repo's doc style.
+   - **(d) Correctness** — a built-in check, and the most important one. For each
+     changed behavior:
+     - Trace one realistic input through the changed code end to end, then the
+       edge inputs: null/undefined, empty list, zero, loading and error states,
+       a second call while the first is still running, a stale value from a
+       closure or cache.
+     - Find every caller of a function, component, endpoint or type whose
+       contract changed (`grep`/`rg` the name) and check each still works.
+     - Check the two sides of a boundary agree: frontend query vs. backend
+       schema, request vs. handler, writer vs. reader of a stored field,
+       migration vs. model.
+     - Check the change against the feature from step 2 — wrong condition, wrong
+       field, inverted flag, off-by-one, missing branch.
+     A real bug is 🔴. A logic weakness that is not yet a bug but will break
+     under a likely input or the next planned step is 🟡. Name the input that
+     breaks it in the TLDR ("if rows is empty this divides by 0").
+   - **(e) Reuse** — a built-in check, second only to correctness. For every new
+     function, component, hook, util, type, const or style block the branch adds:
+     - Search the repo for one that already does the same: `rg` by likely names
+       and by behavior keywords, and look in the shared places (`utils/`, `lib/`,
+       `common/`, `shared/`, `components/`, `hooks/`, design-system packages),
+       plus what earlier PRs of the same task added (step 2).
+     - Check the diff against itself: two new pieces that do the same thing.
+     - Check the other way: new logic the branch writes inline in two or more
+       places, or that clearly belongs to a shared layer (a formatter inside a
+       component, a fetch helper inside a page), should be extracted.
+     Found an existing one → 🟡 with its path in the TLDR ("we have
+     formatCurrency in utils/money.ts, use it") and a `suggestion` that calls it.
+     Only flag when the existing piece really fits (same behavior, same inputs) —
+     read it first. A near-miss that would need changes to fit is 🔵 at most.
+     In test files, skip reuse findings unless the copy is large.
 
-     Anchor a finding on the doc comment lines, not on the function body, so the
-     `suggestion` block can replace the doc. This holds even when the doc lines
-     themselves are unchanged, because the branch's change is what made them
-     wrong (the step-1 exception). The `suggestion` is the corrected doc,
-     written from what the code actually does after reading it — never a guess.
-     Match the repo's doc style (tags, `@param` format, line length). When the
-     function is the target but there is no doc to anchor on, anchor on the
-     signature line and let the `suggestion` be the doc plus that line.
+   Merge anything found in (a)–(e) into the same findings list (dedupe by line;
+   when two findings land on one line, keep the higher-priority one).
 
-   Merge anything found in (a), (b) and (c) into the same findings list (dedupe by
-   line).
-
-5. **Output in this order:**
-   1. **One-line tally** — `## Review — N findings (X 🔴 · Y 🟡 · Z 🔵)`.
-   2. **`### 🟡 Must fix (N)`** — group header with count, then the 🔴/🟡
-      findings as step-3 inline comments, ordered by file then line (the order a
-      reviewer scrolls the diff). Put a short divider line of box-drawing dashes
-      — `────────────────────────` — on its own line *between* consecutive
-      findings (not after the last). Use `### 🔴 Must fix (N)` if any blockers.
-   3. **`### 🔵 Nits (N)`** — same grouped format, same dividers.
-   4. **Final gate checklist** — the checklist from the loaded ruleset, one row
-      per category, ✓ / ~ / ✗ with one-line evidence, then one more row for the
-      built-in check: `Doc comments on new/changed functions — N checked`.
+6. **Output in this order:**
+   1. **Context line** — one line from step 2: `**Feature:** <what it is> ·
+      **this PR:** <its slice> · related: #12, #15` (leave out "related" when
+      there are none).
+   2. **One-line tally** — `## Review — N findings (X 🔴 · Y 🟡 · Z 🔵)`.
+   3. **`### 🟡 Must fix (N)`** — group header with count, then the 🔴/🟡
+      findings as step-4 inline comments. Order: bugs and feature gaps first,
+      then reuse, then logic, then the rest; within each, by file then line. Put
+      a short divider line of box-drawing dashes — `────────────────────────` —
+      on its own line *between* consecutive findings (not after the last). Use
+      `### 🔴 Must fix (N)` if any blockers.
+   4. **`### 🔵 Nits (N)`** — same grouped format, same dividers. About five at
+      most (see the review priorities).
+   5. **Final gate checklist** — the checklist from the loaded ruleset, one row
+      per category, ✓ / ~ / ✗ with one-line evidence, then the built-in rows:
+      `Feature intent — matches / gaps`, `Correctness — N behaviors traced`,
+      `Reuse — N new pieces searched`, `Misleading docs — N found`.
       Secondary summary only.
-   5. Offer to apply the fixes (Edit them on request — the `suggestion` blocks
+   6. Offer to apply the fixes (Edit them on request — the `suggestion` blocks
       are already the exact edits).
 
    Each finding carries its code (B/S/N + number) on the anchor, so the group
@@ -250,16 +344,21 @@ checklist is a secondary summary.
 
 ### Severity scale (engine — repo examples live in the ruleset)
 
-- 🔴 **blocker** — ships a bug/regression, breaks a caller, leaks data, or breaks
-  a hard repo rule. A reviewer blocks merge on it.
-- 🟡 **should-fix** — a recurring team review comment that *will* come back if
-  unfixed: duplication, magic value, missing test, missing null/error path,
-  convention violation. Reviewer requests changes.
-- 🔵 **nit** — style/polish a reviewer might leave but wouldn't block: trivial
-  comment, local naming, micro-DRY.
+- 🔴 **blocker** — ships a bug/regression, breaks a caller, leaks data, leaves
+  the feature not working for its slice, or breaks a hard repo rule. A reviewer
+  blocks merge on it.
+- 🟡 **should-fix** — duplicates a component/util/hook that already exists (or
+  copies logic that should be shared), a logic weakness that a likely input or
+  the next planned step will break, a missing null/error path, a missing test
+  for risky untested logic, a doc made wrong by the change, a recurring team
+  comment about any of these. Reviewer requests changes.
+- 🔵 **nit** — clean-code polish a reviewer might leave but wouldn't block:
+  naming, formatting, a small refactor, a magic value that is used once, a
+  missing test for simple logic. Few of them, never in test files.
 
 The concrete triggers per severity live under **Severity examples** in the loaded
-ruleset. Judge against those, not against generic best practice.
+ruleset. Judge against those, after the review priorities have filtered them —
+not against generic best practice.
 
 When the user asks "is this a fix?" the severity already answers it: 🔴/🟡 = yes,
 fix before pushing; 🔵 = optional.
