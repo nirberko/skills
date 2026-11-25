@@ -17,6 +17,9 @@ answer didn't land.
 - **`/cr-post`** — takes those findings and leaves them on the PR itself: one review,
   each comment on its line, short, in Simplified Technical English, indistinguishable
   from a person's.
+- **`/reply`** — answers the open review threads on your PR: checks the code to see
+  what you already fixed, then one short human reply per thread, in Simplified
+  Technical English. `done.` is a valid reply.
 - **`/pr`** — opens the PR with a short body a stranger to the feature can follow:
   the Jira ticket, why, what changed, the result, and screenshots when it's
   visual, in Simplified Technical English and your `AGENTS.md` vocabulary.
@@ -81,11 +84,13 @@ cp -R skills/output-styles/* ~/.claude/output-styles/
 | `tldr` | you | Re-says the message you just read in one or two short paragraphs — what it said and why it matters to you, in Simplified Technical English and your project's own vocabulary. No headings, no bullets, no code, no repeated steps. The long version stays above it. |
 | `cr` | you | Reviews the current branch — committed *and* uncommitted — against your repo's ruleset, and returns GitHub-style inline comments: severity code, `file:line`, the offending lines, a blunt one-line TLDR, and a one-click ` ```suggestion ` fix. Before it reviews, it reads the PR body, the Jira ticket and earlier PRs of the same task, since one PR is often a slice of a larger feature. Its own priorities come first: bugs and broken logic, then reuse of existing components/utils/hooks, then tests, with clean-code polish last. It stays quiet on code comments and on test-file style unless a fix is a must. |
 | `cr-post` | you or the model | Posts a `/cr` run on the PR. Resolves the PR, drops findings whose line isn't in the diff (uncommitted work, pre-existing code) and ones already commented on, rewrites each TLDR as a short Simplified Technical English comment with no severity code and no bot markers, keeps the ` ```suggestion ` block, shows a preview, and posts the lot as one `COMMENT` review once you say yes. With a Slack MCP connected and someone else's PR, it also DMs the author the comment count. |
+| `reply` | you or the model | Replies to the open review threads on your PR. Keeps only unresolved threads where a reviewer spoke last (bots skipped), reads the code at the PR head and diffs it against the commit the reviewer saw, then picks a stance per thread — fixed, will fix, disagree, answer, later, ask — and drafts one short Simplified Technical English reply with no thank-yous, hedges or commit SHAs. Shows a preview with judgement calls flagged, posts in-thread after you say yes, and never edits code. `resolve` resolves the fixed threads. |
 
 Trigger phrases: `/learn`, "teach me X", "walk me through X" · `/explain`, "what does
 this do", "I don't understand this PR comment" · `/tech-design`, "write a design doc
 for X", "draft a TDR" · `/cr`, "review my changes", "am I ready to push" ·
-`/cr-post`, "post these on the PR", "leave the review on GitHub" · `/pr`, "open a
+`/cr-post`, "post these on the PR", "leave the review on GitHub" · `/reply`, "reply
+to the comments on my PR", "answer the review" · `/pr`, "open a
 PR", "write the PR description" · `/pr-why`, "why was this PR made", "help me
 understand PR 1234" · `/tldr` (you only —
 the model never reaches for it, because only you know when an answer was too long).
