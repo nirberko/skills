@@ -3,9 +3,9 @@ name: cr-post
 description: >-
   Takes the findings from a `/cr` run and posts them on the GitHub PR as inline
   review comments, each anchored to the line it is about. Rewrites every finding
-  as a short comment in ASD-STE100 Simplified Technical English — no severity
-  code, no category number, no bot markers, just the sentence a colleague would
-  type — keeps the one-click ```suggestion block, drops any finding whose line is
+  as a one-sentence comment in ASD-STE100 Simplified Technical English — no
+  severity code, no category number, no commit SHA, no hedges or AI filler, just
+  the short sentence a colleague would type — keeps the one-click ```suggestion block, drops any finding whose line is
   not in the PR diff, dedupes against comments already on the PR, shows a preview,
   and posts the lot as ONE review after you confirm. If a Slack MCP is connected
   and the PR is someone else's, it also DMs the author a one-line heads-up with
@@ -81,20 +81,30 @@ arg brings them in):
 **Report every dropped or held-back finding with its reason.** A silent drop
 reads as "posted", and the user stops looking at it.
 
-## Step 3 — Rewrite each finding as a human comment
+## Step 3 — Rewrite each finding as a short human comment
 
-The `/cr` TLDR is the raw material, not the comment. Rewrite it in ASD-STE100
-Simplified Technical English, in the register of a colleague who types fast.
+The `/cr` TLDR is the raw material, not the comment. Write what a senior
+colleague types between two meetings: short, exact, done. If a reader can tell
+an AI wrote it, rewrite it.
 
-**Simplified Technical English, per comment:**
+**Length — the hard limit:**
 
-- One idea. One sentence, two at most, 20 words or fewer each.
+- One sentence. Two only when the first one states a condition or a cause.
+- 12 words or fewer per sentence is the target; 20 is the ceiling.
+- The `suggestion` block does not count. When it carries the fix, the sentence
+  only says what is wrong: `this throws on null.` + suggestion. Do not also say
+  "use the suggestion below".
+- Cut every word that does not change the meaning. Then cut one more.
+
+**ASD-STE100 Simplified Technical English:**
+
 - Active voice, present tense. Name the actor: "this throws", not "an error is
   thrown".
 - No `-ing` verb and no gerund. "you are reusing it" → "you use it".
   "error handling is missing" → "handle the error".
 - No perfect tense. "has been changed" → "changed".
-- Condition before instruction: "if the list is empty, this throws. add a guard."
+- Imperative for the action: "add a guard.", "use formatDate."
+- Condition before instruction: "if the list is empty, this throws."
 - Keep the articles. Do not stack more than three nouns.
 - One word for one meaning **across the whole review**. If comment 1 says
   "const", comment 4 does not say "constant".
@@ -104,42 +114,68 @@ Simplified Technical English, in the register of a colleague who types fast.
   requires → needs · provide → give · modify → change · approximately → about ·
   functionality → the thing it actually does.
 - **Exempt:** code, paths, identifiers, error strings, and the `suggestion`
-  block. `AlertRunner` stays `AlertRunner`. Never reword code.
+  block. `AlertRunner` stays `AlertRunner`. Never reword code. Wrap identifiers
+  in backticks.
+
+**Never write these — they read as AI:**
+
+- Hedges and soft openers: "consider", "you might want to", "it may be worth",
+  "it would be better to", "perhaps", "I'd suggest", "potentially", "just a
+  thought".
+- Filler and justification tails: "for better maintainability", "for
+  readability", "to improve clarity", "to avoid potential issues", "this ensures
+  that", "this helps".
+- Framing words: "note that", "it's important to", "keep in mind", "worth
+  noting", "make sure to", "robust", "seamless", "streamline", "edge case
+  handling".
+- Em dashes (—), semicolons, bullet lists, headings, bold, or more than one
+  sentence of explanation.
+- Restating the code. The comment is anchored to it.
+- Greeting, praise, thanks, sign-off, "As an AI", bot footer, or any mention
+  that a ruleset or a tool exists.
+- Severity code (`S1`, `B2`, `N3`), `#N` category, severity emoji, `TLDR:`,
+  `problem:` / `fix:` labels.
+- The commit SHA, or "in commit abc123". The comment sits on the line; that is
+  enough.
 
 **Human shape:**
 
-- No severity code (`S1`, `B2`, `N3`), no `#N` category, no severity emoji, no
-  `TLDR:`, no `problem:` / `fix:` labels. The comment is the comment.
-- No greeting, no praise sandwich, no sign-off, no "As an AI", no bot footer, no
-  mention that a ruleset or a tool exists.
-- Lowercase start is fine. Blunt is fine.
-- A question is a valid comment: `why 286?`
+- Lowercase start. End with a period, or a `?` for a question. Blunt is fine.
+- A question is a valid comment, often the best one: `why 286?` ·
+  `can this be null?`
 - `nit:` is the one allowed prefix — a person writes that. Use it for the 🔵 ones.
-- Do not restate the code. The comment is anchored to it.
-- One emoji, at most, and only if the team's own comments carry them. Never as a
-  severity tag.
+- No emoji.
 - Two findings on one line become **one** comment, not two.
 - Keep the ` ```suggestion ` block whenever the fix is a localized line edit —
   one click for the author. Drop it when the fix is not ("add a test", "split
   this file"); then the sentence carries the action.
+- Do not make every comment the same shape. Mix a statement, a question, an
+  imperative. Ten comments that all read "X does Y. do Z." look generated.
 
 **Examples**
 
 | Finding | Posted comment |
 |---|---|
-| bug on an edge input | `if rows is empty, this divides by 0.` |
-| existing util not used | `we have formatCurrency in utils/money.ts. use it.` |
-| copied component | `this is the same as StatusChip in components/common. use that one.` |
-| logic in two places | `this filter is also in useOrders. move it to one shared helper.` |
-| race | `this runs before the fetch resolves, so data is still undefined.` |
-| unguarded access | `if the user is null, this throws. add a guard.` |
+| bug on an edge input | `divides by 0 when rows is empty.` |
+| existing util not used | `we have formatCurrency in utils/money.ts.` |
+| copied component | `same as StatusChip in components/common. use that.` |
+| logic in two places | `useOrders has this filter too. share it.` |
+| race | `runs before the fetch resolves, so data is undefined here.` |
+| unguarded access | `can user be null here?` |
 | feature gap | `the ticket says archived orders stay hidden. this shows them.` |
-| missing test, risky logic | `add a test for the empty-batch path.` |
-| magic number (nit) | `nit: why 286? give it a name.` |
+| missing test, risky logic | `add a test for the empty batch.` |
+| magic number (nit) | `nit: why 286?` |
+| fix is in the suggestion | `this throws on null.` + suggestion |
 
 Not this: `Consider extracting this into a reusable helper for better
 maintainability.` · `🟡 should-fix · #1 DRY: the value is being reused.` ·
-`Great work! One small thing — it should be noted that…`
+`Great work! One small thing — it should be noted that…` · `This could
+potentially lead to a runtime error if the user object is null. You might want
+to add a null check to ensure robustness.`
+
+**Last pass before the preview.** Read each comment and ask: would a busy
+engineer type this exact text? If it has a hedge, a reason tail, a dash, or more
+words than the point needs, cut it.
 
 **Volume is part of looking human.** More than about 12 inline comments on one PR
 reads like a bot. Over that, post the 🔴/🟡 findings only, and say in one line
@@ -154,8 +190,8 @@ Posting on a PR is public and notifies people. Show exactly what will go up:
 ```
 PR #4213 · owner/repo · 6 comments to post
 
-src/features/orders/OrderTable.tsx:135   this string is in 3 places. move it to a const.   + suggestion
-src/features/orders/useOrders.ts:88      if the data is null, this throws. add a guard.    + suggestion
+src/features/orders/OrderTable.tsx:135   same string in 3 places. make it a const.   + suggestion
+src/features/orders/useOrders.ts:88      throws when data is null.                    + suggestion
 ...
 
 skipped 3:
@@ -187,9 +223,9 @@ bash <this-skill-dir>/scripts/post_review.sh --comments /tmp/cr-post.json
 ```json
 [
   {"path": "src/features/orders/OrderTable.tsx", "line": 135,
-   "body": "this string is in 3 places. move it to a const.\n\n```suggestion\n  await page.setDescription(DESCRIPTION)\n```"},
+   "body": "same string in 3 places. make it a const.\n\n```suggestion\n  await page.setDescription(DESCRIPTION)\n```"},
   {"path": "src/lib/batch.ts", "start_line": 40, "start_side": "RIGHT", "line": 42,
-   "body": "if the batch is empty, this loop never exits. add the guard."}
+   "body": "never exits when the batch is empty."}
 ]
 ```
 
@@ -199,6 +235,8 @@ Rules for the payload:
   changed line needs. Use `LEFT` only to comment on a deleted line.
 - A multi-line span needs `start_line` + `start_side`, and for a `suggestion`
   block the span must match the lines the block replaces, exactly.
+- Never send `commit_id`. Without it GitHub anchors the review to the PR's
+  latest commit, and no SHA shows on the comments. The script leaves it out.
 - `event` is always `COMMENT`. GitHub rejects `APPROVE` and `REQUEST_CHANGES` on
   your own PR, and this is usually the user's own PR.
 - Leave the review summary body empty by default. The inline comments are the

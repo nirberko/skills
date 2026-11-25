@@ -17,7 +17,8 @@
 #   1. resolves the repo and the PR,
 #   2. fails when local HEAD is not the PR head commit (line numbers would drift),
 #   3. drops any comment whose path:line is not commentable in the PR diff,
-#   4. posts everything left as ONE review with event=COMMENT,
+#   4. posts everything left as ONE review with event=COMMENT and no commit_id
+#      (GitHub anchors it to the PR's latest commit, so no SHA shows on the review),
 #   5. prints the review URL on stdout.
 # Dropped comments go to stderr as JSONL, each with a "_skip" reason.
 set -euo pipefail
@@ -105,8 +106,10 @@ if [[ "$COUNT" -eq 0 ]]; then
   exit 3
 fi
 
-PAYLOAD=$(jq -n --arg commit "$HEAD_SHA" --arg body "$BODY" --argjson comments "$VALID" \
-  '{commit_id: $commit, event: "COMMENT", comments: $comments}
+# No commit_id: GitHub uses the PR's latest commit, which the HEAD check above
+# already pinned to the local tree.
+PAYLOAD=$(jq -n --arg body "$BODY" --argjson comments "$VALID" \
+  '{event: "COMMENT", comments: $comments}
    + (if ($body | length) > 0 then {body: $body} else {} end)')
 
 if [[ "$DRY" -eq 1 ]]; then
